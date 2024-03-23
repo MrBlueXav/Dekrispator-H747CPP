@@ -25,7 +25,7 @@ void Do_____nothing(uint8_t val);
 
 /*------------------------------MIDI CC implementation----------------------------------------*/
 
-void (*ControlChangeFunctionsTable[128])(uint8_t val) =
+void (* const ControlChangeFunctionsTable[128])(uint8_t val) =
 {	Do_____nothing, 			/* 0 */
 	VibratoAmp_set,				/* 1    	"Modulation Wheel" 	*/
 	DelayWet_set,

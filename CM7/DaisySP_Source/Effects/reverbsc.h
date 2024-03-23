@@ -68,8 +68,8 @@ class ReverbSc
     float      damp_fact_;
     float      prv_lpfreq_;
     int        init_done_;
-//    ReverbScDl  delay_lines_[8];
-//    float      aux_[DSY_REVERBSC_MAX_SIZE];
+    ReverbScDl  delay_lines_[8];
+    float      aux_[DSY_REVERBSC_MAX_SIZE];
 };
 
 

@@ -45,10 +45,10 @@ extern int8_t velocity;
 
 /*--------------------------------------------------------------*/
 
-//ReverbSc verb;
-//Oscillator osc;
-//AdEnv envel;
-//Metro tick;
+ReverbSc _SDRAM_ verb;
+Oscillator osc;
+AdEnv envel;
+Metro tick;
 
 static Oscillator_t op1 _DTCMRAM_;
 static Oscillator_t op2 _DTCMRAM_;
@@ -109,7 +109,7 @@ static float vol _DTCMRAM_;
 //static SynthPatch_t mypatch;
 //static SynthPatch_t initpatch;
 //static uint16_t currentPatchMemory;
-static PatchMemoryCtl_t patchMemoryCtl;
+static PatchMemoryCtl_t _DTCMRAM_ patchMemoryCtl;
 
 /*--------------------------------------------------------------*/
 void Synth_patch_save(SynthPatch_t *patch);
@@ -119,27 +119,27 @@ void Synth_patch_save(SynthPatch_t *patch);
 void Synth_Init(void) {
 	samplerate = (float) SAMPLERATE;
 
-//	/*----------------++++++++++++++++++++++----------------*/
-//	//setup reverb
-//	verb.Init(samplerate);
-//	verb.SetFeedback(0.9f);
-//	verb.SetLpFreq(18000.0f);
-//
-//	//setup metro
-//	tick.Init(1.f, samplerate);
-//
-//	//setup envelope
-//	envel.Init(samplerate);
-//	envel.SetTime(ADENV_SEG_ATTACK, .1f);
-//	envel.SetTime(ADENV_SEG_DECAY, .1f);
-//	envel.SetMax(1.f);
-//	envel.SetMin(0.f);
-//	envel.SetCurve(0.f); //linear
-//
-//	//setup oscillator
-//	osc.Init(samplerate);
-//	osc.SetFreq(440.f);
-//	osc.SetWaveform(Oscillator::WAVE_TRI);
+	/*----------------++++++++++++++++++++++----------------*/
+	//setup reverb
+	verb.Init(samplerate);
+	verb.SetFeedback(0.9f);
+	verb.SetLpFreq(18000.0f);
+
+	//setup metro
+	tick.Init(1.f, samplerate);
+
+	//setup envelope
+	envel.Init(samplerate);
+	envel.SetTime(ADENV_SEG_ATTACK, .1f);
+	envel.SetTime(ADENV_SEG_DECAY, .1f);
+	envel.SetMax(1.f);
+	envel.SetMin(0.f);
+	envel.SetCurve(0.f); //linear
+
+	//setup oscillator
+	osc.Init(samplerate);
+	osc.SetFreq(440.f);
+	osc.SetWaveform(Oscillator::WAVE_TRI);
 	/*---------+++++++++++++++++++++++++++++++++------------*/
 
 	g_sequencerIsOn = true;

@@ -26,7 +26,7 @@
 
 /*-------------------------------------------------------------------------------------------*/
 /* Delay effect variables  */
-static float 		delayline[DELAYLINE_LEN + 2];
+static float _SDRAM_	delayline[DELAYLINE_LEN + 2];
 static float 		*readpos _DTCMRAM_; 	// output pointer of delay line
 static float 		*writepos _DTCMRAM_; 	// input pointer of delay line
 static uint32_t 	shift _DTCMRAM_;		// delay in number of samples

@@ -18,10 +18,7 @@
 void SystemClock_Config(void);
 static void MPU_Config(void);
 
-/* 1MB test ---------------------------------------*/
-//#define TEST_BUFF_SIZE (1024 * 1024)
-//static uint32_t _SDRAM_ test_buff[TEST_BUFF_SIZE];
-
+/*-------------------------------------------------------------------------------*/
 /**
  * @brief  The application entry point.
  * @retval int
@@ -83,18 +80,13 @@ int main(void) {
 	EnableTiming(); // For performance measurements
 	BSP_LED_Init(LED_RED);
 
-//	if (BSP_SDRAM_Init(0) != BSP_ERROR_NONE)
-//		Error_Handler();
-//
-//	for (uint32_t i = 0; i < TEST_BUFF_SIZE; i++) {
-//		test_buff[i] = i;
-//	}
-//	for (uint32_t i = 0; i < TEST_BUFF_SIZE; i++) {
-//		if (test_buff[i] != i) {
-//			Error_Handler();
-//		}
-//	}
-//	SDRAM_demo();
+	if (BSP_SDRAM_Init(0) != BSP_ERROR_NONE)
+		Error_Handler();
+
+//	BSP_LCD_Init(0, LCD_ORIENTATION_LANDSCAPE);
+//	HAL_Delay(3000);
+
+	SDRAM_demo();
 	Synth_Init();
 	AudioInit();
 
@@ -173,7 +165,7 @@ void SystemClock_Config(void) {
 /*-----------------------------------------------------------------------------------------------------------------*/
 /* MPU Configuration */
 
-void MPU_Config(void) {
+static void MPU_Config(void) {
 	MPU_Region_InitTypeDef MPU_InitStruct = { 0 };
 
 	/* Disables the MPU */
@@ -193,20 +185,6 @@ void MPU_Config(void) {
 	MPU_InitStruct.IsBufferable = MPU_ACCESS_NOT_BUFFERABLE;
 	HAL_MPU_ConfigRegion(&MPU_InitStruct);
 
-	/* Configure the MPU attributes as WT for SDRAM */
-	MPU_InitStruct.Enable = MPU_REGION_ENABLE;
-	MPU_InitStruct.BaseAddress = SDRAM_DEVICE_ADDR;
-	MPU_InitStruct.Size = MPU_REGION_SIZE_32MB;
-	MPU_InitStruct.AccessPermission = MPU_REGION_FULL_ACCESS;
-	MPU_InitStruct.IsBufferable = MPU_ACCESS_NOT_BUFFERABLE;
-	MPU_InitStruct.IsCacheable = MPU_ACCESS_CACHEABLE;
-	MPU_InitStruct.IsShareable = MPU_ACCESS_SHAREABLE;
-	MPU_InitStruct.Number = MPU_REGION_NUMBER1;
-	MPU_InitStruct.TypeExtField = MPU_TEX_LEVEL0;
-	MPU_InitStruct.SubRegionDisable = 0x00;
-	MPU_InitStruct.DisableExec = MPU_INSTRUCTION_ACCESS_ENABLE;
-	HAL_MPU_ConfigRegion(&MPU_InitStruct);
-
 	/* Configure the MPU attributes for SRAM4 in D3 */
 	MPU_InitStruct.Enable = MPU_REGION_ENABLE;
 	MPU_InitStruct.BaseAddress = D3_SRAM_BASE;
@@ -219,6 +197,20 @@ void MPU_Config(void) {
 	MPU_InitStruct.TypeExtField = MPU_TEX_LEVEL0;
 	MPU_InitStruct.SubRegionDisable = 0x00;
 	MPU_InitStruct.DisableExec = MPU_INSTRUCTION_ACCESS_ENABLE;
+	HAL_MPU_ConfigRegion(&MPU_InitStruct);
+
+	/* Configure the MPU attributes as WT for SDRAM */
+	MPU_InitStruct.Enable = MPU_REGION_ENABLE;
+	MPU_InitStruct.BaseAddress = SDRAM_DEVICE_ADDR;
+	MPU_InitStruct.Size = MPU_REGION_SIZE_32MB;
+	MPU_InitStruct.AccessPermission = MPU_REGION_FULL_ACCESS;
+	MPU_InitStruct.IsBufferable = MPU_ACCESS_BUFFERABLE;
+	MPU_InitStruct.IsCacheable = MPU_ACCESS_NOT_CACHEABLE;
+	MPU_InitStruct.IsShareable = MPU_ACCESS_SHAREABLE;
+	MPU_InitStruct.Number = MPU_REGION_NUMBER2;
+	MPU_InitStruct.TypeExtField = MPU_TEX_LEVEL0;
+	MPU_InitStruct.SubRegionDisable = 0x00;
+	MPU_InitStruct.DisableExec = MPU_INSTRUCTION_ACCESS_DISABLE;
 	HAL_MPU_ConfigRegion(&MPU_InitStruct);
 
 	/* Enables the MPU */

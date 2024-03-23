@@ -34,6 +34,7 @@ extern "C" {
 #include "rng.h"
 #include "gpio.h"
 #include "perf.h"
+//#include "stm32h747i_discovery_lcd.h"
 #include "stm32h747i_discovery.h"
 #include "stm32h747i_discovery_audio.h"
 #include "stm32h747i_discovery_sdram.h"

@@ -22,8 +22,8 @@
 using namespace daisysp;
 
 /*==============================================================================*/
-static ReverbScDl 	_SDRAM_ 	delay_lines_[8];
-static float   		_SDRAM_   	aux_[DSY_REVERBSC_MAX_SIZE];
+//static ReverbScDl 	_SDRAM_ 	delay_lines_[8];
+//static float   		_SDRAM_   	aux_[DSY_REVERBSC_MAX_SIZE];
 /*==============================================================================*/
 
 /* kReverbParams[n][0] = delay time (in seconds)                     */
