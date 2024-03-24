@@ -13,11 +13,11 @@
 
 /*-----------------------------------------------------------------------------*/
 
-uint8_t notes_On[128] _DTCMRAM_; /*= {0};*/
+uint8_t notes_On[128] _DTCMRAM_;
 int8_t notesCount = 0; // number of notes on (keys pressed)
-int8_t currentNote;
-int8_t velocity;
-//extern ADSR_t adsr;
+int8_t currentNote _DTCMRAM_ ;
+int8_t velocity _DTCMRAM_ ;
+
 extern bool g_sequencerIsOn;
 
 /*-----------------------------------------------------------------------------*/
@@ -37,9 +37,9 @@ void (* const ControlChangeFunctionsTable[128])(uint8_t val) =
 	Filter1Freq_set,
 	Filter1Res_set,
 	Do_____nothing, 			/* 10 		"Pan"  				*/
-	Do_____nothing,				/* 11		"Expression"  		*/
+	Reverb_length_set,				/* 11		"Expression"  		*/
 	Filter1Drive_set,
-	Volume_set,
+	Do_____nothing,
 	Delay_time_set,
 	DelayFeedback_set, 			/* 15 */
 	VibratoAmp_set,
@@ -56,7 +56,7 @@ void (* const ControlChangeFunctionsTable[128])(uint8_t val) =
 	Filter_Random_switch,
 	Chorus_switch,
 	seq_length_dec,
-	seq_length_inc,		/* 30 */
+	seq_length_inc,				/* 30 */
 	Sequencer_toggle,
 	Do_____nothing,
 	seq_transpM2,
@@ -70,8 +70,8 @@ void (* const ControlChangeFunctionsTable[128])(uint8_t val) =
 	seq_tempo_double,
 	seq_gateTime_set,
 	AttTime_set,
-	metro_tempo_set,			// MODIFIED
-	metro2_tempo_set,				/* 45 */
+	metro_tempo_set,
+	metro2_tempo_set,			/* 45 */
 	metro3_tempo_set,
 	Do_____nothing,
 	Do_____nothing,

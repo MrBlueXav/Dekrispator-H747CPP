@@ -283,6 +283,8 @@ void incSynthOut(void);
 void decSynthOut(void);
 void SynthOut_amp_set(uint8_t val);
 
+void Reverb_length_set(uint8_t val);
+
 void Delay_toggle(void);
 void Delay_switch(uint8_t val);
 

@@ -21,7 +21,7 @@
 #include "audio_play.h"
 #include "stm32h747i_discovery.h"
 
-float samplerate ;
+float samplerate _DTCMRAM_;
 
 /* Private define ------------------------------------------------------------*/
 

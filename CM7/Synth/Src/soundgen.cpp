@@ -35,20 +35,15 @@ using namespace daisysp;
 /*--------------------------------------------------------------*/
 
 extern float samplerate;
-
-bool g_sequencerIsOn;
-
 extern Sequencer_t seq;
 extern NoteGenerator_t noteGen;
 extern int8_t currentNote;
 extern int8_t velocity;
 
 /*--------------------------------------------------------------*/
+bool g_sequencerIsOn _DTCMRAM_;
 
-ReverbSc _SDRAM_ verb;
-Oscillator osc;
-AdEnv envel;
-Metro tick;
+static ReverbSc _SDRAM_ verb; // from DaisySP
 
 static Oscillator_t op1 _DTCMRAM_;
 static Oscillator_t op2 _DTCMRAM_;
@@ -97,18 +92,14 @@ static bool autoFilterON _DTCMRAM_;
 static bool delayON _DTCMRAM_;
 static bool phaserON _DTCMRAM_;
 static bool chorusON _DTCMRAM_;
-static bool it_is_an_init_patch;
+static bool it_is_an_init_patch _DTCMRAM_;
 
-//static Timbre_t sound _DTCMRAM_;
 static uint8_t sound _DTCMRAM_;
 static int8_t autoSound _DTCMRAM_;
 
 static float f0 _DTCMRAM_;
 static float vol _DTCMRAM_;
 
-//static SynthPatch_t mypatch;
-//static SynthPatch_t initpatch;
-//static uint16_t currentPatchMemory;
 static PatchMemoryCtl_t _DTCMRAM_ patchMemoryCtl;
 
 /*--------------------------------------------------------------*/
@@ -117,6 +108,7 @@ void Synth_patch_save(SynthPatch_t *patch);
 /*============================================== Main Synth initialization =========================================*/
 
 void Synth_Init(void) {
+
 	samplerate = (float) SAMPLERATE;
 
 	/*----------------++++++++++++++++++++++----------------*/
@@ -124,22 +116,6 @@ void Synth_Init(void) {
 	verb.Init(samplerate);
 	verb.SetFeedback(0.75f);
 	verb.SetLpFreq(18000.0f);
-
-	//setup metro
-	tick.Init(1.f, samplerate);
-
-	//setup envelope
-	envel.Init(samplerate);
-	envel.SetTime(ADENV_SEG_ATTACK, .1f);
-	envel.SetTime(ADENV_SEG_DECAY, .1f);
-	envel.SetMax(1.f);
-	envel.SetMin(0.f);
-	envel.SetCurve(0.f); //linear
-
-	//setup oscillator
-	osc.Init(samplerate);
-	osc.SetFreq(440.f);
-	osc.SetWaveform(Oscillator::WAVE_TRI);
 	/*---------+++++++++++++++++++++++++++++++++------------*/
 
 	g_sequencerIsOn = true;
@@ -707,6 +683,11 @@ void SynthOut_amp_set(uint8_t val) {
 	mbRectOsc.amp = amp;
 	mbRectOsc2.amp = amp;
 	mbTriOsc.amp = amp;
+}
+
+/******************************************** Reverb functions ********************************/
+void Reverb_length_set(uint8_t val) {
+	verb.SetFeedback(val / MIDI_MAX);
 }
 
 /******************************************** Delay functions ********************************/
