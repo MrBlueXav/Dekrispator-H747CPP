@@ -54,6 +54,7 @@ class ReverbSc
         \param fb - sets reverb time. range: 0.0 to 1.0
     */
     inline void SetFeedback(const float &fb) { feedback_ = fb; }
+
     /** controls the internal dampening filter's cutoff frequency.
         \param freq - low pass frequency. range: 0.0 to sample_rate / 2
     */

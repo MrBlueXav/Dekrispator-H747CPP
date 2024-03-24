@@ -122,7 +122,7 @@ void Synth_Init(void) {
 	/*----------------++++++++++++++++++++++----------------*/
 	//setup reverb
 	verb.Init(samplerate);
-	verb.SetFeedback(0.9f);
+	verb.SetFeedback(0.75f);
 	verb.SetLpFreq(18000.0f);
 
 	//setup metro
@@ -1195,7 +1195,7 @@ void _ITCMRAM_ make_sound(uint16_t *buf, uint16_t length) // To be used with the
 
 	uint16_t *outp;
 	float y, y1, y2, y3;
-	float yL, yR;
+	float yL, yR, zL, zR;
 	float f1;
 	float env, env1, env2, env3;
 	uint16_t valueL, valueR;
@@ -1423,12 +1423,12 @@ void _ITCMRAM_ make_sound(uint16_t *buf, uint16_t length) // To be used with the
 //			envel.Trigger();
 //		}
 //		float sig = envel.Process() * osc.Process();
-//		verb.Process(sig, sig, &yL, &yR);
-//		//yL = yR = sig;
+		verb.Process(0.2*yL, 0.2*yR, &zL, &zR);
+		//yL = yR = sig;
 
 		/****** let's hear the new sample *******/
-		valueL = (uint16_t) ((int16_t) ((32767.0f) * yL)); // conversion float -> int16 !!!???
-		valueR = (uint16_t) ((int16_t) ((32767.0f) * yR));
+		valueL = (uint16_t) ((int16_t) ((32767.0f) * zL)); // conversion float -> int16 !!!???
+		valueR = (uint16_t) ((int16_t) ((32767.0f) * zR));
 
 		*outp++ = valueL; // left channel sample
 		*outp++ = valueR; // right channel sample
