@@ -57,6 +57,9 @@ static SynthPatch_t *patch;
 static char *strg;
 static uint8_t messageBuffer[1024];
 static volatile bool SEV_received;
+static volatile uint32_t JoyPinPressed = 0;
+static volatile uint32_t Joy_State;
+static volatile bool joyOn;
 
 /* message buffers variables in SRAM4 */
 volatile uint8_t *buf_cm4_to_cm7 = (void*) BUFF_CM4_TO_CM7_ADDR;
@@ -88,6 +91,11 @@ void openamp_init(void)
 	memset((void*) buf_cm7_to_cm4, 0x00, MAX_PATCH_SIZE);
 	memset((void*) scr_datas, 0x00, MAX_BUFF2_SIZE);
 	message_received = 0;
+	SEV_received = false;
+	message_received = 0;
+	JoyPinPressed = 0;
+	Joy_State = JOY_NONE;
+	joyOn = false;
 
 }
 /*----------------------------------------------------------------------------------------------------------------*/
@@ -217,17 +225,78 @@ void write_initPatch_to_sector8Kbuffer(SynthPatch_t *patch) /* Fill sector8Kbuff
 		memcpy(&sector8Kbuffer[patchAddress], patch, sizeof(*patch)); /* copy patch to buffer */
 	}
 }
+/*----------------------------------------------------------------------------------------------------------------*/
+void midipacket_sendToCM7(midi_package_t packet)
+{
+	int32_t status = 0;
+	status = OPENAMP_send(&rp_endpoint, &packet, sizeof(packet));
+	if (status < 0)
+	{
+		Error_Handler();
+	}
+}
+
+/*------------------------------------------------------------------------------------------------*/
+void BSP_JOY_Callback(JOY_TypeDef JOY, uint32_t JoyPin)
+{
+	JoyPinPressed = JoyPin;
+	joyOn = !joyOn;
+}
 
 /*------------------------------------------------------------------------------------------------*/
 void Application_Process(void) // called in main() loop (main_cm4.c)
 {
+	midi_package_t pack;
 
-	if (SEV_received) /* a patch has been written by CM7 in the shared buffer */
+	/* Is there a new patch written by CM7 in the shared buffer ? */
+	if (SEV_received)
 	{
 		printf("SEV signal from CM7 received !\n");
 		patch = (SynthPatch_t*) buf_cm7_to_cm4;
 		SEV_received = false;
 	}
+
+	/*------- read joystick ---------------*/
+	if (joyOn) /* if joystick is pressed and not released */
+	{
+		switch (JoyPinPressed)
+		{
+		case 0x01U:
+			Joy_State = JOY_SEL;
+			printf("JOY_SEL \n");
+			break;
+
+		case 0x02U:
+			Joy_State = JOY_DOWN;
+			printf("JOY_DOWN \n");
+			pack.ALL = VOL_DEC_CMD;
+			midipacket_sendToCM7(pack);
+			break;
+
+		case 0x04U:
+			Joy_State = JOY_LEFT;
+			printf("JOY_LEFT \n");
+			break;
+
+		case 0x08U:
+			Joy_State = JOY_RIGHT;
+			printf("JOY_RIGHT \n");
+			break;
+
+		case 0x10U:
+			Joy_State = JOY_UP;
+			printf("JOY_UP \n");
+			pack.ALL = VOL_INC_CMD;
+			midipacket_sendToCM7(pack);
+			break;
+
+		default:
+			Joy_State = JOY_NONE;
+			break;
+		}
+	}
+
+	JoyPinPressed = 0; /*  joystick action done */
 
 	/* Check for CM7 messages (openAMP) */
 	if (message_received == 0)
@@ -239,7 +308,6 @@ void Application_Process(void) // called in main() loop (main_cm4.c)
 		uint16_t loc;
 		uint8_t cmd;
 		uint32_t sectorAddress;
-		uint32_t patchAddress;
 
 		cmd = binn_object_uint8(messageBuffer, "cmd");
 
@@ -248,16 +316,19 @@ void Application_Process(void) // called in main() loop (main_cm4.c)
 
 		case 'D': /* request for loading a patch */
 			loc = binn_object_uint16(messageBuffer, "location");
-			patchAddress = PATCH_MEMORY_START_ADDRESS + MAX_PATCH_SIZE * loc; /* Find address of memory in which patch will be read */
+			uint32_t patchAddress = PATCH_MEMORY_START_ADDRESS + MAX_PATCH_SIZE * loc; /* Find address of memory in which patch will be read */
 
 			if (BSP_QSPI_Read(0, (uint8_t*) buf_cm4_to_cm7, patchAddress, sizeof(*patch)) != BSP_ERROR_NONE) /* read this patch to buffer */
 			{
 				printf("Read error !\n");
+				//return BSP_ERROR_COMPONENT_FAILURE;
 			}
 			else
 			{
-				/* inform CM7 that patch is ready in shared "buf_cm4_to_cm7" buffer */
-				asm("sev");
+				/* inform CM7 that a patch is ready in shared "buf_cm4_to_cm7" buffer */
+				//asm("sev");
+				pack.ALL = LOAD_PATCH_CMD;
+				midipacket_sendToCM7(pack);
 				printf("Patch # %u loaded !\n", loc + 1); /* hope it's been loaded ! */
 				sprintf(string_message, "Patch # %u loaded !           ", loc + 1);
 				UTIL_LCD_DisplayStringAt(201, 297, (uint8_t*) string_message, LEFT_MODE);
@@ -318,6 +389,7 @@ void Application_Process(void) // called in main() loop (main_cm4.c)
 
 		case 'S': /* print any string */
 			strg = binn_object_str(messageBuffer, "string");
+			UTIL_LCD_DisplayStringAt(201, 297, (uint8_t*) strg, LEFT_MODE);
 			printf(strg);
 			free(strg);
 			break;
@@ -345,7 +417,7 @@ void Application_Process(void) // called in main() loop (main_cm4.c)
 			break;
 
 		default:
-			printf("Unidentified message !\n");
+			printf("openAMP message received !\n");
 			break;
 		}
 
@@ -402,17 +474,6 @@ void USBH_MIDI_ReceiveCallback(USBH_HandleTypeDef *phost)
 	BSP_LED_On(LED_BLUE);
 	Process_ReceivedMidiDatas();
 	BSP_LED_Off(LED_BLUE);
-}
-
-/*----------------------------------------------------------------------------------------------------------------*/
-void midipacket_sendToCM7(midi_package_t packet)
-{
-	int32_t status = 0;
-	status = OPENAMP_send(&rp_endpoint, &packet, sizeof(packet));
-	if (status < 0)
-	{
-		Error_Handler();
-	}
 }
 
 /*-----------------------------------------------------------------------------*/

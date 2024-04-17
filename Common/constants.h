@@ -2,21 +2,18 @@
  ******************************************************************************
  * File Name          : constants.h
  * Author			  : Xavier Halgand
- * Date               :
+ * Date               :	2024
  * Description        : Global defines for Dekrispator
  ******************************************************************************
  */
 #ifndef __DEKR_CONSTANTS_H__
 #define __DEKR_CONSTANTS_H__
 
-
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-
-/*--------------------------------------------------------------------------------------*/
-
+/*****************************************************************************************************************/
 #define AUDIO_BUFFER_SIZE       1024 /* AUDIO_BUFFER_SIZE (in bytes) must be a multiple of 8   */
 
 #define FREQ_CM7				400000000
@@ -27,7 +24,7 @@ extern "C" {
 #define _2PI                    6.283185307f
 #define _PI                    	3.14159265f
 
-#define VOL                     70 // initial output DAC volume
+#define VOL                     60 // initial output DAC volume
 #define MAXVOL                  100 // maximal output DAC volume
 
 #define MIDI_MAX				127.f 	// floating max value
@@ -37,6 +34,11 @@ extern "C" {
 #define USE_THE_LCD				1
 #define BACKGRND_ADDR			((uint32_t *)0x97E80000) /* address in QSPI Flash for background image  : 0x90000000 + 128MB - 1.5MB */
 
+/***************************************** Messages for CM7 ************************************************************/
+#define VOL_INC_CMD				0x01010000
+#define VOL_DEC_CMD				0x01020000
+#define LOAD_PATCH_CMD			0x01030000
+
 /*****************************************************************************************************************/
 #define _DTCMRAM_				__attribute__((section(".DTCMRAM_section_bss")))
 #define _SDRAM_					__attribute__((section(".sdram_bss")))
@@ -44,9 +46,6 @@ extern "C" {
 //#define _ITCMRAM_				__attribute__((section(".itcm_text")))
 #define	_ITCMRAM_
 //#define _DTCMRAM_
-
-#define _CCM_
-#define _DTCM_
 
 /******************************************************************************************************************/
 #define MAX_PATCH_SIZE			1024	/* Don't modify */
@@ -77,6 +76,7 @@ extern "C" {
     #define __ALIGN    __attribute__ ((aligned (4)))
 #endif /* __GNUC__ */
 
+/******************************************************************************************************************/
 
 #ifdef __cplusplus
 }

@@ -18,13 +18,14 @@
 void SystemClock_Config(void);
 static void MPU_Config(void);
 
+float global_samplerate ;
+
 /*-------------------------------------------------------------------------------*/
 /**
  * @brief  The application entry point.
  * @retval int
  */
 int main(void) {
-	int32_t timeout;
 
 	/* MPU Configuration--------------------------------------------------------*/
 	MPU_Config();
@@ -36,7 +37,7 @@ int main(void) {
 	SCB_EnableDCache();
 
 	/* Wait until CPU2 boots and enters in stop mode or timeout------------------*/
-	timeout = 0xFFFF;
+	int32_t timeout = 0xFFFF;
 	while ((__HAL_RCC_GET_FLAG(RCC_FLAG_D2CKRDY) != RESET) && (timeout-- > 0))
 		;
 	if (timeout < 0) {
@@ -80,10 +81,15 @@ int main(void) {
 	EnableTiming(); // For performance measurements
 	BSP_LED_Init(LED_RED);
 
+	//HAL_Delay(2000);
+
+	//SDRAM_test();
+	//SDRAM_DMA_test();
+
 	if (BSP_SDRAM_Init(0) != BSP_ERROR_NONE)
 		Error_Handler();
 
-	SDRAM_demo();
+	global_samplerate = (float) SAMPLERATE;
 	Synth_Init();
 	AudioInit();
 

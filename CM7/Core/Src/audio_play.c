@@ -1,47 +1,47 @@
 /**
  ******************************************************************************
  * @file    audio_play.c
- * @author  MCD Application Team
- * @brief   This example code shows how to use the audio feature in the
- *          stm32747i_discovery driver
- ******************************************************************************
- * @attention
- *
- * Copyright (c) 2019 STMicroelectronics.
- * All rights reserved.
- *
- * This software is licensed under terms that can be found in the LICENSE file
- * in the root directory of this software component.
- * If no LICENSE file comes with this software, it is provided AS-IS.
- *
+ * @author  Xavier Halgand
+ * @brief   2024
  ******************************************************************************
  */
 
 /* Includes ------------------------------------------------------------------*/
 #include "audio_play.h"
 #include "stm32h747i_discovery.h"
+#include "openamp_interface.h"
+#include <stdio.h>
+#include "stm32h7xx_hal.h"
+#include "stm32h747i_discovery_audio.h"
+#include "soundGen.h"
+#include "perf.h"
+#include "constants.h"
 
-float samplerate _DTCMRAM_;
-
-/* Private define ------------------------------------------------------------*/
-
-#define AUDIO_DEFAULT_VOLUME    70
+char string_message[100];
 
 /* Private typedef -----------------------------------------------------------*/
-typedef enum
-{
-	AUDIO_STATE_IDLE = 0, AUDIO_STATE_INIT, AUDIO_STATE_PLAYING, AUDIO_STATE_PAUSE
+typedef enum {
+  AUDIO_ERROR_NONE = 0,
+  AUDIO_ERROR_NOTREADY,
+  AUDIO_ERROR_IO,
+  AUDIO_ERROR_EOF,
+
+} AUDIO_ErrorTypeDef;
+
+typedef enum {
+	AUDIO_STATE_IDLE = 0,
+	AUDIO_STATE_INIT,
+	AUDIO_STATE_PLAYING,
+	AUDIO_STATE_PAUSE
 
 } AUDIO_PLAYBACK_StateTypeDef;
 
-typedef enum
-{
+typedef enum {
 	BUFFER_OFFSET_NONE = 0, BUFFER_OFFSET_HALF, BUFFER_OFFSET_FULL,
 
 } BUFFER_StateTypeDef;
 
-typedef struct
-{
+typedef struct {
 	uint8_t buff[AUDIO_BUFFER_SIZE]; // AUDIO_BUFFER_SIZE is defined in constants.h
 	BUFFER_StateTypeDef state;
 
@@ -50,8 +50,9 @@ typedef struct
 /* Private variables ---------------------------------------------------------*/
 ALIGN_32BYTES(static AUDIO_BufferTypeDef buffer_ctl);
 static AUDIO_PLAYBACK_StateTypeDef audio_state;
-__IO uint32_t uwVolume = 20;
-BSP_AUDIO_Init_t *AudioPlayInit;
+static bool sound = true;
+static volatile uint32_t uwVolume;
+static BSP_AUDIO_Init_t AudioPlayInit;
 
 /* Private functions ---------------------------------------------------------*/
 
@@ -60,18 +61,16 @@ BSP_AUDIO_Init_t *AudioPlayInit;
  * @param  None
  * @retval None
  */
-void AudioInit(void)
-{
-	uwVolume = 60;
+void AudioInit(void) {
+	uwVolume = VOL;
 
-	AudioPlayInit->Device = AUDIO_OUT_DEVICE_HEADPHONE;
-	AudioPlayInit->ChannelsNbr = 2;
-	AudioPlayInit->SampleRate = SAMPLERATE;
-	AudioPlayInit->BitsPerSample = AUDIO_RESOLUTION_16B;
-	AudioPlayInit->Volume = uwVolume;
+	AudioPlayInit.Device = AUDIO_OUT_DEVICE_HEADPHONE;
+	AudioPlayInit.ChannelsNbr = 2;
+	AudioPlayInit.SampleRate = SAMPLERATE;
+	AudioPlayInit.BitsPerSample = AUDIO_RESOLUTION_16B;
+	AudioPlayInit.Volume = uwVolume;
 
-	if (BSP_AUDIO_OUT_Init(0, AudioPlayInit) != BSP_ERROR_NONE)
-	{
+	if (BSP_AUDIO_OUT_Init(0, &AudioPlayInit) != BSP_ERROR_NONE) {
 		Error_Handler();
 	}
 	HAL_Delay(500);
@@ -88,39 +87,39 @@ void AudioInit(void)
 }
 
 /*----------------------------------------------------------------------------------------------------*/
-uint8_t AUDIO_Process(void)
-{
+uint8_t AUDIO_Process(void) {
 	AUDIO_ErrorTypeDef error_state = AUDIO_ERROR_NONE;
 
-	switch (audio_state)
-	{
+	switch (audio_state) {
 	case AUDIO_STATE_PLAYING:
 
 		BSP_LED_Off(LED_ORANGE); // CPU load indicator
 
 		/* 1st half buffer played; so fill it and continue playing from bottom*/
-		if (buffer_ctl.state == BUFFER_OFFSET_HALF)
-		{
+		if (buffer_ctl.state == BUFFER_OFFSET_HALF) {
 			cyc_count_reset();
 
 			make_sound((uint16_t*) &buffer_ctl.buff[0], AUDIO_BUFFER_SIZE / 8);
 			buffer_ctl.state = BUFFER_OFFSET_NONE;
 
 			/* Clean Data Cache to update the content of the SRAM */
-			SCB_CleanDCache_by_Addr((uint32_t*) &buffer_ctl.buff[0], AUDIO_BUFFER_SIZE / 2);
+			SCB_CleanDCache_by_Addr((uint32_t*) &buffer_ctl.buff[0],
+			AUDIO_BUFFER_SIZE / 2);
 			cyc_count_print();
 		}
 
 		/* 2nd half buffer played; so fill it and continue playing from top */
-		if (buffer_ctl.state == BUFFER_OFFSET_FULL)
-		{
+		if (buffer_ctl.state == BUFFER_OFFSET_FULL) {
 			cyc_count_reset();
 
-			make_sound((uint16_t*) &buffer_ctl.buff[AUDIO_BUFFER_SIZE / 2], AUDIO_BUFFER_SIZE / 8);
+			make_sound((uint16_t*) &buffer_ctl.buff[AUDIO_BUFFER_SIZE / 2],
+			AUDIO_BUFFER_SIZE / 8);
 			buffer_ctl.state = BUFFER_OFFSET_NONE;
 
 			/* Clean Data Cache to update the content of the SRAM */
-			SCB_CleanDCache_by_Addr((uint32_t*) &buffer_ctl.buff[AUDIO_BUFFER_SIZE / 2], AUDIO_BUFFER_SIZE / 2);
+			SCB_CleanDCache_by_Addr(
+					(uint32_t*) &buffer_ctl.buff[AUDIO_BUFFER_SIZE / 2],
+					AUDIO_BUFFER_SIZE / 2);
 			cyc_count_print();
 		}
 
@@ -147,10 +146,8 @@ uint8_t AUDIO_Process(void)
  * @param  None
  * @retval None
  */
-void BSP_AUDIO_OUT_TransferComplete_CallBack(uint32_t Instance)
-{
-	if (audio_state == AUDIO_STATE_PLAYING)
-	{
+void BSP_AUDIO_OUT_TransferComplete_CallBack(uint32_t Instance) {
+	if (audio_state == AUDIO_STATE_PLAYING) {
 		/* allows AUDIO_Process() to refill 2nd part of the buffer  */
 		buffer_ctl.state = BUFFER_OFFSET_FULL;
 	}
@@ -161,10 +158,8 @@ void BSP_AUDIO_OUT_TransferComplete_CallBack(uint32_t Instance)
  * @param  None
  * @retval None
  */
-void BSP_AUDIO_OUT_HalfTransfer_CallBack(uint32_t Instance)
-{
-	if (audio_state == AUDIO_STATE_PLAYING)
-	{
+void BSP_AUDIO_OUT_HalfTransfer_CallBack(uint32_t Instance) {
+	if (audio_state == AUDIO_STATE_PLAYING) {
 		/* allows AUDIO_Process() to refill 1st part of the buffer  */
 		buffer_ctl.state = BUFFER_OFFSET_HALF;
 	}
@@ -175,8 +170,45 @@ void BSP_AUDIO_OUT_HalfTransfer_CallBack(uint32_t Instance)
  * @param  None
  * @retval None
  */
-void BSP_AUDIO_OUT_Error_CallBack(uint32_t Instance)
-{
+void BSP_AUDIO_OUT_Error_CallBack(uint32_t Instance) {
 	BSP_LED_On(LED_RED);
 }
-/*-------------------------------- END OF FILE ---------------------------------------*/
+
+//--------------------------------- toggle ON/OFF volume ------------------------------------------
+void toggleSound(void) {
+	if (!sound) {
+		//pitchGenResetPhase();
+		BSP_AUDIO_OUT_SetVolume(0, uwVolume);
+		sound = true;
+	} else {
+		BSP_AUDIO_OUT_SetVolume(0, 0);
+		sound = false;
+	}
+}
+//------------------------------- increase output DAC volume --------------------------------------------
+void incVol(void) {
+	if (uwVolume < MAXVOL) {
+		uwVolume++;
+		BSP_AUDIO_OUT_SetVolume(0, uwVolume);
+	}
+	sprintf(string_message, "Volume is now : %lu            ", uwVolume);
+	send_string_to_CM4(string_message);
+}
+
+//-------------------------------- decrease output DAC volume ------------------------------------------
+void decVol(void) {
+	if (uwVolume > 0) {
+		uwVolume--;
+		BSP_AUDIO_OUT_SetVolume(0, uwVolume);
+	}
+	sprintf(string_message, "Volume is now : %lu            ", uwVolume);
+	send_string_to_CM4(string_message);
+}
+
+//------------------------------------------------------------------------------------------------------
+void Volume_set(uint8_t val) {
+	uwVolume = (uint8_t) (MAXVOL / MIDI_MAX * val);
+	BSP_AUDIO_OUT_SetVolume(0, uwVolume);
+}
+
+/*-------------------------------- END OF FILE -------------------------------------------------------------------------*/

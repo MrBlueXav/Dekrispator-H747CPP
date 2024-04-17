@@ -14,8 +14,8 @@ extern "C" {
 #endif
 
 /*------------------------------------------------------------*/
-void SDRAM_demo (void);
-void SDRAM_DMA_demo (void);
+void SDRAM_test (void);
+void SDRAM_DMA_test (void);
 
 /*---------------------------------------------------------------*/
 #ifdef __cplusplus

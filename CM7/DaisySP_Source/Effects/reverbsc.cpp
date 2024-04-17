@@ -133,7 +133,7 @@ int ReverbSc::InitDelayLine(ReverbScDl *lp, int n)
     lp->read_pos = (int)read_pos;
     read_pos     = (read_pos - (float)lp->read_pos) * (float)DELAYPOS_SCALE;
     lp->read_pos_frac = (int)(read_pos + 0.5);
-    /* initialise first random line segment */
+    /* initialize first random line segment */
     NextRandomLineseg(lp, n);
     /* clear delay line to zero */
     lp->filter_state = 0.0;

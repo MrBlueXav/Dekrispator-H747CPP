@@ -32,9 +32,9 @@
 
 /* Private define ------------------------------------------------------------*/
 #define SDRAM_WRITE_READ_ADDR		0xD0400000
-#define BUFFER_SIZE					((uint32_t)0x0100)
+#define BUFFER_SIZE					256
 #define WRITE_READ_ADDR				((uint32_t)0x1000)
-#define TEST_BUFF_SIZE 				(1024 * 1024)
+#define TEST_BUFF_SIZE 				256
 
 /* Private macro -------------------------------------------------------------*/
 
@@ -50,8 +50,6 @@ static uint32_t _SDRAM_ test_buff[TEST_BUFF_SIZE];
 __IO uint32_t uwMDMA_Transfer_Complete = 0;
 
 /* Private function prototypes -----------------------------------------------*/
-static void SDRAM_SetHint(void);
-static void SDRAM_DMA_SetHint(void);
 static void Fill_Buffer(uint32_t *pBuffer, uint32_t uwBufferLenght,
 		uint32_t uwOffset);
 static uint8_t Buffercmp(uint32_t *pBuffer1, uint32_t *pBuffer2,
@@ -63,8 +61,7 @@ static uint8_t Buffercmp(uint32_t *pBuffer1, uint32_t *pBuffer2,
  * @param  None
  * @retval None
  */
-void SDRAM_demo(void) {
-	SDRAM_SetHint();
+void SDRAM_test(void) {
 
 	/* SDRAM device configuration */
 	if (BSP_SDRAM_Init(0) != BSP_ERROR_NONE) {
@@ -116,15 +113,6 @@ void SDRAM_demo(void) {
 //    UTIL_LCD_DisplayStringAt(20, 145, (uint8_t *)"SDRAM Test : OK.", LEFT_MODE);
 	}
 
-//  ButtonState = 0;
-//  while (1)
-//  {
-//    if(CheckForUserInput() > 0)
-//    {
-//      ButtonState = 0;
-//      return;
-//    }
-//  }
 }
 
 /**
@@ -132,9 +120,7 @@ void SDRAM_demo(void) {
  * @param  None
  * @retval None
  */
-void SDRAM_DMA_demo(void) {
-
-	SDRAM_DMA_SetHint();
+void SDRAM_DMA_test(void) {
 
 	//SdramTest = 1;
 	BSP_SDRAM_DeInit(0);
@@ -189,79 +175,8 @@ void SDRAM_DMA_demo(void) {
 //    UTIL_LCD_DisplayStringAt(20, 145, (uint8_t *)"SDRAM Test : OK.", LEFT_MODE);
 	}
 
-//  while (1)
-//  {
-//    if(CheckForUserInput() > 0)
-//    {
-//      ButtonState = 0;
-//      SdramTest = 0;
-//      return;
-//    }
-//  }
-}
-/**
- * @brief  Display SDRAM Demo Hint
- * @param  None
- * @retval None
- */
-static void SDRAM_SetHint(void) {
-//  uint32_t x_size, y_size;
-//
-//  BSP_LCD_GetXSize(0, &x_size);
-//  BSP_LCD_GetYSize(0, &y_size);
-//
-//  /* Clear the LCD */
-//  UTIL_LCD_Clear(UTIL_LCD_COLOR_WHITE);
-//
-//  /* Set LCD Demo description */
-//  UTIL_LCD_FillRect(0, 0, x_size, 80, UTIL_LCD_COLOR_BLUE);
-//  UTIL_LCD_SetTextColor(UTIL_LCD_COLOR_WHITE);
-//  UTIL_LCD_SetBackColor(UTIL_LCD_COLOR_BLUE);
-//  UTIL_LCD_SetFont(&Font24);
-//  UTIL_LCD_DisplayStringAt(0, 0, (uint8_t *)"SDRAM", CENTER_MODE);
-//  UTIL_LCD_SetFont(&Font12);
-//  UTIL_LCD_DisplayStringAt(0, 30, (uint8_t *)"This example shows how to write", CENTER_MODE);
-//  UTIL_LCD_DisplayStringAt(0, 45, (uint8_t *)"and read data on SDRAM", CENTER_MODE);
-//
-//   /* Set the LCD Text Color */
-//  UTIL_LCD_DrawRect(10, 90, x_size - 20, y_size- 100, UTIL_LCD_COLOR_BLUE);
-//  UTIL_LCD_DrawRect(11, 91, x_size - 22, y_size- 102, UTIL_LCD_COLOR_BLUE);
-//
-//  UTIL_LCD_SetTextColor(UTIL_LCD_COLOR_BLACK);
-//  UTIL_LCD_SetBackColor(UTIL_LCD_COLOR_WHITE);
 }
 
-/**
- * @brief  Display SDRAM DMA Demo Hint
- * @param  None
- * @retval None
- */
-static void SDRAM_DMA_SetHint(void) {
-//  uint32_t x_size, y_size;
-//
-//  BSP_LCD_GetXSize(0, &x_size);
-//  BSP_LCD_GetYSize(0, &y_size);
-//
-//  /* Clear the LCD */
-//  UTIL_LCD_Clear(UTIL_LCD_COLOR_WHITE);
-//
-//  /* Set LCD Demo description */
-//  UTIL_LCD_FillRect(0, 0, x_size, 80, UTIL_LCD_COLOR_BLUE);
-//  UTIL_LCD_SetTextColor(UTIL_LCD_COLOR_WHITE);
-//  UTIL_LCD_SetBackColor(UTIL_LCD_COLOR_BLUE);
-//  UTIL_LCD_SetFont(&Font24);
-//  UTIL_LCD_DisplayStringAt(0, 0, (uint8_t *)"SDRAM DMA", CENTER_MODE);
-//  UTIL_LCD_SetFont(&Font12);
-//  UTIL_LCD_DisplayStringAt(0, 30, (uint8_t *)"This example shows how to write", CENTER_MODE);
-//  UTIL_LCD_DisplayStringAt(0, 45, (uint8_t *)"and read data on SDRAM in DMA mode", CENTER_MODE);
-//
-//  /* Set the LCD Text Color */
-//  UTIL_LCD_DrawRect(10, 90, x_size - 20, y_size- 100, UTIL_LCD_COLOR_BLUE);
-//  UTIL_LCD_DrawRect(11, 91, x_size - 22, y_size- 102, UTIL_LCD_COLOR_BLUE);
-//
-//  UTIL_LCD_SetTextColor(UTIL_LCD_COLOR_BLACK);
-//  UTIL_LCD_SetBackColor(UTIL_LCD_COLOR_WHITE);
-}
 /**
  * @brief  Fills buffer with user predefined data.
  * @param  pBuffer: pointer on the buffer to fill
@@ -326,10 +241,3 @@ void HAL_SDRAM_DMA_XferErrorCallback(MDMA_HandleTypeDef *hmdma) {
 //  UTIL_LCD_SetTextColor(UTIL_LCD_COLOR_RED);
 //  UTIL_LCD_DisplayStringAt(20, 215, (uint8_t *)"MDMA ERROR", LEFT_MODE);
 }
-/**
- * @}
- */
-
-/**
- * @}
- */

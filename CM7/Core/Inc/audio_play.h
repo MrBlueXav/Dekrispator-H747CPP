@@ -13,28 +13,16 @@
 #endif
 
 /* Includes ------------------------------------------------------------------*/
-#include <stdio.h>
 #include <stdint.h>
-#include "stm32h7xx_hal.h"
-#include "stm32h747i_discovery_audio.h"
-#include "soundGen.h"
-#include "perf.h"
-#include "constants.h"
-
-/* Exported types ------------------------------------------------------------*/
-typedef enum {
-  AUDIO_ERROR_NONE = 0,
-  AUDIO_ERROR_NOTREADY,
-  AUDIO_ERROR_IO,
-  AUDIO_ERROR_EOF,
-
-}AUDIO_ErrorTypeDef;
 
 /* Exported functions ------------------------------------------------------- */
-
 void 	AudioInit (void);
 uint8_t AUDIO_Process(void);
 void 	Error_Handler(void);
+void 	toggleSound(void);
+void 	incVol(void);
+void 	decVol(void);
+void 	Volume_set(uint8_t val);
 
 #ifdef __cplusplus
  }

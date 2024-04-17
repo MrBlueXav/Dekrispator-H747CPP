@@ -130,8 +130,8 @@ float AnalogBassDrum::Process(bool trigger)
         phase_ += f;
         phase_ = phase_ >= 1.f ? phase_ - 1.f : phase_;
 
-        resonator_out = sin(TWOPI_F * phase_) * sustain_gain_;
-        lp_out_       = cos(TWOPI_F * phase_) * sustain_gain_;
+        resonator_out = sinf(TWOPI_F * phase_) * sustain_gain_;
+        lp_out_       = cosf(TWOPI_F * phase_) * sustain_gain_;
     }
     else
     {

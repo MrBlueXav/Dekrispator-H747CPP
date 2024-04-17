@@ -34,7 +34,7 @@ using namespace daisysp;
 #define EPSI				.00002f
 /*--------------------------------------------------------------*/
 
-extern float samplerate;
+extern float global_samplerate;
 extern Sequencer_t seq;
 extern NoteGenerator_t noteGen;
 extern int8_t currentNote;
@@ -43,6 +43,7 @@ extern int8_t velocity;
 /*--------------------------------------------------------------*/
 bool g_sequencerIsOn _DTCMRAM_;
 
+static DcBlock dcblock _DTCMRAM_;
 static ReverbSc _SDRAM_ verb; // from DaisySP
 
 static Oscillator_t op1 _DTCMRAM_;
@@ -109,14 +110,14 @@ void Synth_patch_save(SynthPatch_t *patch);
 
 void Synth_Init(void) {
 
-	samplerate = (float) SAMPLERATE;
-
 	/*----------------++++++++++++++++++++++----------------*/
 	//setup reverb
-	verb.Init(samplerate);
-	verb.SetFeedback(0.75f);
+	verb.Init(global_samplerate);
+	verb.SetFeedback(0.6f);
 	verb.SetLpFreq(18000.0f);
 	/*---------+++++++++++++++++++++++++++++++++------------*/
+
+	dcblock.Init(global_samplerate);
 
 	g_sequencerIsOn = true;
 	demoModeON = true;
@@ -131,7 +132,7 @@ void Synth_Init(void) {
 	desynkatorON = false;
 
 	sinetable_init();
-	sequencer_init(samplerate);
+	sequencer_init(global_samplerate);
 
 	Osc_init(&op1, 0.8f, 587.f);
 	Osc_init(&op2, 0.8f, 587.f);
@@ -162,9 +163,9 @@ void Synth_Init(void) {
 	Chorus_init();
 
 	/*---- Desynkator initialization -------*/
-	metro_initBPM(&metro1, 90.0f, samplerate);
-	metro_initBPM(&metro2, 90.0f, samplerate);
-	metro_initBPM(&metro3, 90.0f, samplerate);
+	metro_initBPM(&metro1, 90.0f, global_samplerate);
+	metro_initBPM(&metro2, 90.0f, global_samplerate);
+	metro_initBPM(&metro3, 90.0f, global_samplerate);
 	proba1 = proba2 = proba3 = 0.6f;
 	ADSR_init(&adsr2);
 	ADSR_init(&adsr3);
@@ -901,24 +902,33 @@ void metro_reset_rq(uint8_t val) {
 void MagicFX(uint8_t val) /* random effects parameters */
 {
 	if (val == MIDI_MAXi) {
-		Delay_switch(MIDI_MAXi);
-		Delay_time_set(MIDIrandVal());
-		DelayWet_set(MIDIrandVal());
-		DelayFeedback_set(MIDIrandVal());
+		//Delay_switch(MIDI_MAXi);
+		delayON = rand() % 2;
+		if (delayON) {
+			Delay_time_set(MIDIrandVal());
+			DelayWet_set(MIDIrandVal());
+			DelayFeedback_set(MIDIrandVal());
+		}
 
-		Chorus_switch(MIDI_MAXi);
-		ChorusRate_set(MIDIrandVal());
-		ChorusSecondRate_set(MIDIrandVal());
-		ChorusDelay_set(MIDIrandVal());
-		ChorusSweep_set(MIDIrandVal());
-		ChorusFeedback_set(MIDIrandVal());
-		ChorusMode_switch(MIDIrandVal());
-		ChorusFDBsign_switch(MIDIrandVal());
+		//Chorus_switch(MIDI_MAXi);
+		chorusON = rand() % 2;
+		if (chorusON) {
+			ChorusRate_set(MIDIrandVal());
+			ChorusSecondRate_set(MIDIrandVal());
+			ChorusDelay_set(MIDIrandVal());
+			ChorusSweep_set(MIDIrandVal());
+			ChorusFeedback_set(MIDIrandVal());
+			ChorusMode_switch(MIDIrandVal());
+			ChorusFDBsign_switch(MIDIrandVal());
+		}
 
-		Phaser_switch(MIDI_MAXi);
-		Phaser_Rate_set(MIDIrandVal());
-		Phaser_Feedback_set(MIDIrandVal());
-		Phaser_Wet_set(MIDIrandVal());
+		//Phaser_switch(MIDI_MAXi);
+		phaserON = rand() % 2;
+		if (phaserON) {
+			Phaser_Rate_set(MIDIrandVal());
+			Phaser_Feedback_set(MIDIrandVal());
+			Phaser_Wet_set(MIDIrandVal());
+		}
 	}
 }
 /*-----------------------------------------------------------------------------*/
@@ -967,7 +977,8 @@ void MagicPatch(uint8_t val) /* Create a new sound with random sound parameters 
 		Filt2LFO_amp_set(MIDIrandVal());
 		Filt2LFO_freq_set(MIDIrandVal());
 
-		Filter_Random_switch(MIDIrandVal());
+		//Filter_Random_switch(MIDIrandVal());
+		autoFilterON = rand() % 2;
 
 		AttTime_set((uint8_t) lrintf(frand_a_b(0, MIDI_MAX / 10)));
 		DecTime_set(MIDIrandVal());
@@ -1018,9 +1029,9 @@ void _ITCMRAM_ sequencer_newStep_action(void) // User callback function called b
 
 	if (autoFilterON) {
 		SVF_directSetFilterValue(&SVFilter1,
-				600.f / samplerate * powf(5000.f / 600.f, frand_a_b(0, 1)));
+				600.f / SAMPLERATE * powf(5000.f / 600.f, frand_a_b(0, 1)));
 		SVF_directSetFilterValue(&SVFilter2,
-				600.f / samplerate * powf(5000.f / 600.f, frand_a_b(0, 1)));
+				600.f / SAMPLERATE * powf(5000.f / 600.f, frand_a_b(0, 1)));
 	}
 
 	if (noteGen.transpose != 0) {
@@ -1179,7 +1190,7 @@ void _ITCMRAM_ make_sound(uint16_t *buf, uint16_t length) // To be used with the
 	float yL, yR, zL, zR;
 	float f1;
 	float env, env1, env2, env3;
-	uint16_t valueL, valueR;
+	//uint16_t valueL, valueR;
 	uint8_t clock1, clock2, clock3;
 
 	outp = buf;
@@ -1215,10 +1226,10 @@ void _ITCMRAM_ make_sound(uint16_t *buf, uint16_t length) // To be used with the
 
 				if (autoFilterON) {
 					SVF_directSetFilterValue(&SVFilter1,
-							600.f / samplerate
+							600.f / SAMPLERATE
 									* powf(5000.f / 600.f, frand_a_b(0, 1)));
 					SVF_directSetFilterValue(&SVFilter2,
-							600.f / samplerate
+							600.f / SAMPLERATE
 									* powf(5000.f / 600.f, frand_a_b(0, 1)));
 				}
 				if (noteGen.transpose != 0) {
@@ -1295,7 +1306,7 @@ void _ITCMRAM_ make_sound(uint16_t *buf, uint16_t length) // To be used with the
 					* (1 + OpSampleCompute(&amp_lfo, WTSIN));
 			y1 *= vol1 * env1; // apply volume and envelop
 
-			if (adsr.cnt_ >= lrintf(0.5f * samplerate / metro_getFreq(&metro1))) // 50% gate time
+			if (adsr.cnt_ >= (uint32_t) lrintf(0.5f * SAMPLERATE / metro_getFreq(&metro1))) // 50% gate time
 				ADSR_keyOff(&adsr);
 
 			env2 = ADSR_computeSample(&adsr2)
@@ -1303,14 +1314,14 @@ void _ITCMRAM_ make_sound(uint16_t *buf, uint16_t length) // To be used with the
 			y2 *= vol2 * env2; // apply volume and envelop
 
 			if (adsr2.cnt_
-					>= lrintf(0.5f * samplerate / metro_getFreq(&metro2))) // 50% gate time
+					>= (uint32_t) lrintf(0.5f * SAMPLERATE / metro_getFreq(&metro2))) // 50% gate time
 				ADSR_keyOff(&adsr2);
 
 			env3 = ADSR_computeSample(&adsr3);
 			y3 *= vol3 * env3; // apply volume and envelop
 
 			if (adsr3.cnt_
-					>= lrintf(0.5f * samplerate / metro_getFreq(&metro3))) // 50% gate time
+					>= (uint32_t) lrintf(0.5f * SAMPLERATE / metro_getFreq(&metro3))) // 50% gate time
 				ADSR_keyOff(&adsr3);
 
 			/*--- Apply filter effect ---*/
@@ -1355,7 +1366,7 @@ void _ITCMRAM_ make_sound(uint16_t *buf, uint16_t length) // To be used with the
 			y *= vol * env; // apply volume and envelop
 
 			if (g_sequencerIsOn == true) {
-				if (adsr.cnt_ >= seq.gateTime)
+				if (adsr.cnt_ >= (uint32_t) seq.gateTime)
 					ADSR_keyOff(&adsr);
 			}
 
@@ -1393,26 +1404,38 @@ void _ITCMRAM_ make_sound(uint16_t *buf, uint16_t length) // To be used with the
 		else
 			yL = yR = y;
 
+		verb.Process(yL, yR, &zL, &zR);
+
+		/*--- DC removing ---*/
+		zL = dcblock.Process(zL);
+		zR = dcblock.Process(zR);
+
 		/*--- clipping ---*/
-		yL = (yL > 1.0f) ? 1.0f : yL; //clip too loud left samples
-		yL = (yL < -1.0f) ? -1.0f : yL;
+		zL = (zL > 1.0f) ? 1.0f : zL; //clip too loud left samples
+		zL = (zL < -1.0f) ? -1.0f : zL;
 
-		yR = (yR > 1.0f) ? 1.0f : yR; //clip too loud right samples
-		yR = (yR < -1.0f) ? -1.0f : yR;
-
-//		if (tick.Process()) {
-//			envel.Trigger();
-//		}
-//		float sig = envel.Process() * osc.Process();
-		verb.Process(0.2*yL, 0.2*yR, &zL, &zR);
-		//yL = yR = sig;
+		zR = (zR > 1.0f) ? 1.0f : zR; //clip too loud right samples
+		zR = (zR < -1.0f) ? -1.0f : zR;
 
 		/****** let's hear the new sample *******/
-		valueL = (uint16_t) ((int16_t) ((32767.0f) * zL)); // conversion float -> int16 !!!???
-		valueR = (uint16_t) ((int16_t) ((32767.0f) * zR));
+		*outp++ = (uint16_t) ((int16_t) ((32767.0f) * zL)); // left channel sample, conversion float -> int16 !!!???
+		*outp++ = (uint16_t) ((int16_t) ((32767.0f) * zR)); // right channel sample
 
-		*outp++ = valueL; // left channel sample
-		*outp++ = valueR; // right channel sample
+//		/*--- clipping ---*/
+//		yL = (yL > 1.0f) ? 1.0f : yL; //clip too loud left samples
+//		yL = (yL < -1.0f) ? -1.0f : yL;
+//
+//		yR = (yR > 1.0f) ? 1.0f : yR; //clip too loud right samples
+//		yR = (yR < -1.0f) ? -1.0f : yR;
+//
+//		verb.Process(0.1 * yL, 0.1 * yR, &zL, &zR);
+//
+//		/****** let's hear the new sample *******/
+//		valueL = (uint16_t) ((int16_t) ((32767.0f) * 10 * zL)); // conversion float -> int16 !!!???
+//		valueR = (uint16_t) ((int16_t) ((32767.0f) * 10 * zR));
+//
+//		*outp++ = valueL; // left channel sample
+//		*outp++ = valueR; // right channel sample
 	}
 }
 

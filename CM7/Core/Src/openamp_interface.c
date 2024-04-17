@@ -20,7 +20,8 @@ static volatile midi_package_t received_data;
 static struct rpmsg_endpoint rp_endpoint;
 static binn *obj;
 static volatile bool SEV_received;
-static volatile uint32_t _DTCMRAM_ ticktime, oldtime;
+static volatile bool patch_received;
+static volatile uint32_t _DTCMRAM_ ticktime, oldticktime;
 
 /* message buffers variables in SRAM4 ----------------------------------------*/
 volatile uint8_t *buf_cm4_to_cm7 = (void*) BUFF_CM4_TO_CM7_ADDR;
@@ -56,7 +57,7 @@ void new_service_cb(struct rpmsg_device *rdev, const char *name, uint32_t dest)
 void openamp_cm7_init(void)
 {
 	SEV_received = false;
-	oldtime = 0;
+	oldticktime = 0;
 
 	/* Initialize the mailbox use notify the other core on new message */
 	MAILBOX_Init();
@@ -82,6 +83,7 @@ void openamp_cm7_init(void)
 	}
 
 	SEV_received = false;
+	patch_received = false;
 }
 
 /*-------------------------------------------------------------------------------------*/
@@ -187,19 +189,23 @@ void send_screen_infos_to_CM4(void)
 /*----------------------------------------------------------------------------------------------------------------*/
 void CM4_SEV_signal(void)
 {
-	SEV_received = true;
+	//SEV_received = true;
+}
+
+/*----------------------------------------------------------------------------------------------------------------*/
+void load_patch_cmd(void)
+{
+	patch_received = true;
 }
 
 /*-----------------------------------------------------------------------------------------------------------------*/
 void Process_messages(void) // called in main() loop (in main_cm7.c)
 {
 
-	if (SEV_received == true)
+	if (patch_received == true)	/*---  msg from CM4 received ! ---*/
 	{
-		//printf("SEV signal from CM7 received !\n");
-		//printf((char*) buf_cm7_to_cm4);
 		Synth_patch_load((SynthPatch_t*) buf_cm4_to_cm7);
-		SEV_received = false;
+		patch_received = false;
 	}
 
 	if (message_received == 0 && service_created == 1)
@@ -214,9 +220,9 @@ void Process_messages(void) // called in main() loop (in main_cm7.c)
 	}
 
 	ticktime = HAL_GetTick();
-	if ((ticktime - oldtime) > 500) // refresh screen every 0.5 second maximum
+	if ((ticktime - oldticktime) > 500) // refresh screen every 0.5 second maximum
 	{
-		oldtime = ticktime;
+		oldticktime = ticktime;
 		send_screen_infos_to_CM4();
 	}
 }
