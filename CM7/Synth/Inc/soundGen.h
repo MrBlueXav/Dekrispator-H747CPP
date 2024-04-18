@@ -274,13 +274,13 @@ void toggleVibrato(void);
 void VibratoAmp_set(uint8_t val);
 void VibratoFreq_set(uint8_t val);
 
-void toggleSynthOut(void);
-void SynthOut_switch(uint8_t val);
+//void toggleSynthOut(void);
+//void SynthOut_switch(uint8_t val);
 
 void AdditiveGen_newWaveform(void);
 
-void incSynthOut(void);
-void decSynthOut(void);
+//void incSynthOut(void);
+//void decSynthOut(void);
 void SynthOut_amp_set(uint8_t val);
 
 void Reverb_length_set(uint8_t val);
@@ -314,6 +314,8 @@ void metro_reset_rq(uint8_t val);
 
 void MagicFX(uint8_t val);
 void MagicPatch(uint8_t val);
+
+void change_instru_cmd(void);
 
 float waveCompute(uint8_t sound, float frq);
 void Synth_Init(void);

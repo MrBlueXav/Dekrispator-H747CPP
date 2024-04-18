@@ -21,10 +21,7 @@ char string_message[100];
 
 /* Private typedef -----------------------------------------------------------*/
 typedef enum {
-  AUDIO_ERROR_NONE = 0,
-  AUDIO_ERROR_NOTREADY,
-  AUDIO_ERROR_IO,
-  AUDIO_ERROR_EOF,
+	AUDIO_ERROR_NONE = 0, AUDIO_ERROR_NOTREADY, AUDIO_ERROR_IO, AUDIO_ERROR_EOF,
 
 } AUDIO_ErrorTypeDef;
 
@@ -48,7 +45,10 @@ typedef struct {
 } AUDIO_BufferTypeDef;
 
 /* Private variables ---------------------------------------------------------*/
-ALIGN_32BYTES(static AUDIO_BufferTypeDef buffer_ctl);
+//ALIGN_32BYTES(static volatile AUDIO_BufferTypeDef buffer_ctl);
+
+ALIGN_32BYTES(static uint8_t buff[AUDIO_BUFFER_SIZE]); // AUDIO_BUFFER_SIZE is defined in constants.h
+static volatile BUFFER_StateTypeDef state;
 static AUDIO_PLAYBACK_StateTypeDef audio_state;
 static bool sound = true;
 static volatile uint32_t uwVolume;
@@ -81,8 +81,8 @@ void AudioInit(void) {
 	 using Transfer complete and/or half transfer complete interrupts callbacks
 	 (AUDIO_TransferComplete_CallBack() or AUDIO_HalfTransfer_CallBack()...
 	 */
-	buffer_ctl.state = BUFFER_OFFSET_NONE;
-	BSP_AUDIO_OUT_Play(0, (uint8_t*) &buffer_ctl.buff[0], AUDIO_BUFFER_SIZE);
+	state = BUFFER_OFFSET_NONE;
+	BSP_AUDIO_OUT_Play(0, (uint8_t*) &buff[0], AUDIO_BUFFER_SIZE);
 	audio_state = AUDIO_STATE_PLAYING;
 }
 
@@ -93,37 +93,37 @@ uint8_t AUDIO_Process(void) {
 	switch (audio_state) {
 	case AUDIO_STATE_PLAYING:
 
-		BSP_LED_Off(LED_ORANGE); // CPU load indicator
+		//BSP_LED_Off(LED_ORANGE); // CPU load indicator
 
 		/* 1st half buffer played; so fill it and continue playing from bottom*/
-		if (buffer_ctl.state == BUFFER_OFFSET_HALF) {
+		if (state == BUFFER_OFFSET_HALF) {
 			cyc_count_reset();
 
-			make_sound((uint16_t*) &buffer_ctl.buff[0], AUDIO_BUFFER_SIZE / 8);
-			buffer_ctl.state = BUFFER_OFFSET_NONE;
+			make_sound((uint16_t*) &buff[0], AUDIO_BUFFER_SIZE / 8);
+			state = BUFFER_OFFSET_NONE;
 
 			/* Clean Data Cache to update the content of the SRAM */
-			SCB_CleanDCache_by_Addr((uint32_t*) &buffer_ctl.buff[0],
+			SCB_CleanDCache_by_Addr((uint32_t*) &buff[0],
 			AUDIO_BUFFER_SIZE / 2);
 			cyc_count_print();
 		}
 
 		/* 2nd half buffer played; so fill it and continue playing from top */
-		if (buffer_ctl.state == BUFFER_OFFSET_FULL) {
+		if (state == BUFFER_OFFSET_FULL) {
 			cyc_count_reset();
 
-			make_sound((uint16_t*) &buffer_ctl.buff[AUDIO_BUFFER_SIZE / 2],
+			make_sound((uint16_t*) &buff[AUDIO_BUFFER_SIZE / 2],
 			AUDIO_BUFFER_SIZE / 8);
-			buffer_ctl.state = BUFFER_OFFSET_NONE;
+			state = BUFFER_OFFSET_NONE;
 
 			/* Clean Data Cache to update the content of the SRAM */
 			SCB_CleanDCache_by_Addr(
-					(uint32_t*) &buffer_ctl.buff[AUDIO_BUFFER_SIZE / 2],
+					(uint32_t*) &buff[AUDIO_BUFFER_SIZE / 2],
 					AUDIO_BUFFER_SIZE / 2);
 			cyc_count_print();
 		}
 
-		BSP_LED_On(LED_ORANGE);
+		//BSP_LED_On(LED_ORANGE);
 
 		break;
 
@@ -149,7 +149,7 @@ uint8_t AUDIO_Process(void) {
 void BSP_AUDIO_OUT_TransferComplete_CallBack(uint32_t Instance) {
 	if (audio_state == AUDIO_STATE_PLAYING) {
 		/* allows AUDIO_Process() to refill 2nd part of the buffer  */
-		buffer_ctl.state = BUFFER_OFFSET_FULL;
+		state = BUFFER_OFFSET_FULL;
 	}
 }
 /*----------------------------------------------------------------------------------------------------*/
@@ -161,7 +161,7 @@ void BSP_AUDIO_OUT_TransferComplete_CallBack(uint32_t Instance) {
 void BSP_AUDIO_OUT_HalfTransfer_CallBack(uint32_t Instance) {
 	if (audio_state == AUDIO_STATE_PLAYING) {
 		/* allows AUDIO_Process() to refill 1st part of the buffer  */
-		buffer_ctl.state = BUFFER_OFFSET_HALF;
+		state = BUFFER_OFFSET_HALF;
 	}
 }
 /*----------------------------------------------------------------------------------------------------*/

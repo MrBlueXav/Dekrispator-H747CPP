@@ -247,6 +247,9 @@ void ProcessReceivedMidiDatas(midi_package_t pack) {
 
 	} else if (pack.ALL == LOAD_PATCH_CMD) {
 		load_patch_cmd();
+
+	} else if (pack.ALL == CHG_INSTR_CMD) {
+		change_instru_cmd();
 	}
 }
 

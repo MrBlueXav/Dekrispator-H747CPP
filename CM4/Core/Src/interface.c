@@ -281,6 +281,8 @@ void Application_Process(void) // called in main() loop (main_cm4.c)
 		case 0x08U:
 			Joy_State = JOY_RIGHT;
 			printf("JOY_RIGHT \n");
+			pack.ALL = CHG_INSTR_CMD;
+			midipacket_sendToCM7(pack);
 			break;
 
 		case 0x10U:

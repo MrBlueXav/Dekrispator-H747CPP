@@ -2,7 +2,7 @@
  ******************************************************************************
  * File Name        : soundgen.cpp
  * Author			: Xavier Halgand
- * Date             : 2024
+ * Date             : april 2024
  * Description      : main synthesizer file : modules & structure
  ******************************************************************************
  */
@@ -43,7 +43,15 @@ extern int8_t velocity;
 /*--------------------------------------------------------------*/
 bool g_sequencerIsOn _DTCMRAM_;
 
-static DcBlock dcblock _DTCMRAM_;
+static SyntheticBassDrum bd _DTCMRAM_;
+static SyntheticSnareDrum sd _DTCMRAM_;
+static AnalogBassDrum abd _DTCMRAM_;
+static AnalogSnareDrum asd _DTCMRAM_;
+static HiHat<> hihat _DTCMRAM_;
+static Metro tick _DTCMRAM_;
+static uint8_t drumcnt _DTCMRAM_;
+
+static DcBlock dcblock _DTCMRAM_; // from DaisySP
 static ReverbSc _SDRAM_ verb; // from DaisySP
 
 static Oscillator_t op1 _DTCMRAM_;
@@ -86,6 +94,7 @@ static float vol1 _DTCMRAM_;
 static float vol2 _DTCMRAM_;
 static float vol3 _DTCMRAM_;
 
+static bool drummerON _DTCMRAM_;
 static bool desynkatorON _DTCMRAM_;
 static bool demoModeON _DTCMRAM_;
 static bool freezeON _DTCMRAM_;
@@ -93,6 +102,7 @@ static bool autoFilterON _DTCMRAM_;
 static bool delayON _DTCMRAM_;
 static bool phaserON _DTCMRAM_;
 static bool chorusON _DTCMRAM_;
+static bool reverbON _DTCMRAM_;
 static bool it_is_an_init_patch _DTCMRAM_;
 
 static uint8_t sound _DTCMRAM_;
@@ -110,15 +120,6 @@ void Synth_patch_save(SynthPatch_t *patch);
 
 void Synth_Init(void) {
 
-	/*----------------++++++++++++++++++++++----------------*/
-	//setup reverb
-	verb.Init(global_samplerate);
-	verb.SetFeedback(0.6f);
-	verb.SetLpFreq(18000.0f);
-	/*---------+++++++++++++++++++++++++++++++++------------*/
-
-	dcblock.Init(global_samplerate);
-
 	g_sequencerIsOn = true;
 	demoModeON = true;
 	freezeON = false;
@@ -129,10 +130,31 @@ void Synth_Init(void) {
 	chorusON = false;
 	delayON = false;
 	phaserON = false;
+	reverbON = true;
 	desynkatorON = false;
+	drummerON = false;
 
 	sinetable_init();
 	sequencer_init(global_samplerate);
+
+	bd.Init(global_samplerate);
+	bd.SetFreq(50.f);
+	bd.SetDirtiness(.5f);
+	bd.SetFmEnvelopeAmount(.6f);
+	sd.Init(global_samplerate);
+	abd.Init(global_samplerate);
+	abd.SetFreq(50.f);
+	asd.Init(global_samplerate);
+	hihat.Init(global_samplerate);
+	tick.Init(3.f, global_samplerate);
+	drumcnt = 0;
+
+	//setup reverb
+	verb.Init(global_samplerate);
+	verb.SetFeedback(0.6f);
+	verb.SetLpFreq(18000.0f);
+
+	dcblock.Init(global_samplerate);
 
 	Osc_init(&op1, 0.8f, 587.f);
 	Osc_init(&op2, 0.8f, 587.f);
@@ -611,61 +633,61 @@ void AmpLFO_freq_set(uint8_t val) {
 }
 
 /******************************************** Volume functions *******************************/
-void toggleSynthOut(void) {
-	if (op1.amp != 0) {
-		op1.last_amp = op1.amp;
-		op1.amp = 0;
-		op2.last_amp = op2.amp;
-		op2.amp = 0;
-		op3.last_amp = op3.amp;
-		op3.amp = 0;
-	} else {
-		op1.amp = op1.last_amp;
-		op2.amp = op2.last_amp;
-		op3.amp = op3.last_amp;
-	}
-}
+//void toggleSynthOut(void) {
+//	if (op1.amp != 0) {
+//		op1.last_amp = op1.amp;
+//		op1.amp = 0;
+//		op2.last_amp = op2.amp;
+//		op2.amp = 0;
+//		op3.last_amp = op3.amp;
+//		op3.amp = 0;
+//	} else {
+//		op1.amp = op1.last_amp;
+//		op2.amp = op2.last_amp;
+//		op3.amp = op3.last_amp;
+//	}
+//}
 /*-------------------------------------------------------*/
-void SynthOut_switch(uint8_t val) {
-
-	switch (val) {
-	case MIDI_MAXi:
-		op1.amp = op1.last_amp;
-		op2.amp = op2.last_amp;
-		op3.amp = op3.last_amp;
-		mbSawOsc.amp = mbSawOsc.last_amp;
-		mbRectOsc.amp = mbRectOsc.last_amp;
-		mbTriOsc.amp = mbTriOsc.last_amp;
-		break;
-
-	case 0:
-		op1.last_amp = op1.amp;
-		op1.amp = 0;
-		op2.last_amp = op2.amp;
-		op2.amp = 0;
-		op3.last_amp = op3.amp;
-		op3.amp = 0;
-		mbSawOsc.last_amp = mbSawOsc.amp;
-		mbSawOsc.amp = 0;
-		mbRectOsc.last_amp = mbRectOsc.amp;
-		mbRectOsc.amp = 0;
-		mbTriOsc.last_amp = mbTriOsc.amp;
-		mbTriOsc.amp = 0;
-		break;
-	}
-}
+//void SynthOut_switch(uint8_t val) {
+//
+//	switch (val) {
+//	case MIDI_MAXi:
+//		op1.amp = op1.last_amp;
+//		op2.amp = op2.last_amp;
+//		op3.amp = op3.last_amp;
+//		mbSawOsc.amp = mbSawOsc.last_amp;
+//		mbRectOsc.amp = mbRectOsc.last_amp;
+//		mbTriOsc.amp = mbTriOsc.last_amp;
+//		break;
+//
+//	case 0:
+//		op1.last_amp = op1.amp;
+//		op1.amp = 0;
+//		op2.last_amp = op2.amp;
+//		op2.amp = 0;
+//		op3.last_amp = op3.amp;
+//		op3.amp = 0;
+//		mbSawOsc.last_amp = mbSawOsc.amp;
+//		mbSawOsc.amp = 0;
+//		mbRectOsc.last_amp = mbRectOsc.amp;
+//		mbRectOsc.amp = 0;
+//		mbTriOsc.last_amp = mbTriOsc.amp;
+//		mbTriOsc.amp = 0;
+//		break;
+//	}
+//}
 /*-------------------------------------------------------*/
-void incSynthOut(void) {
-	op1.amp *= 1.2f;
-	op2.amp *= 1.2f;
-	op3.amp *= 1.2f;
-}
-/*-------------------------------------------------------*/
-void decSynthOut(void) {
-	op1.amp *= .8f;
-	op2.amp *= .8f;
-	op3.amp *= .8f;
-}
+//void incSynthOut(void) {
+//	op1.amp *= 1.2f;
+//	op2.amp *= 1.2f;
+//	op3.amp *= 1.2f;
+//}
+///*-------------------------------------------------------*/
+//void decSynthOut(void) {
+//	op1.amp *= .8f;
+//	op2.amp *= .8f;
+//	op3.amp *= .8f;
+//}
 /*-------------------------------------------------------*/
 void SynthOut_amp_set(uint8_t val) {
 	float_t amp;
@@ -699,6 +721,7 @@ void Delay_toggle(void) {
 	} else
 		delayON = true;
 }
+
 /*-------------------------------------------------------*/
 void Delay_switch(uint8_t val) {
 	if (val == MIDI_MAXi) {
@@ -706,7 +729,6 @@ void Delay_switch(uint8_t val) {
 		if (delayON)
 			Delay_clean();
 	}
-
 }
 
 /******************************************** Chorus functions *******************************/
@@ -716,6 +738,7 @@ void Chorus_toggle(void) {
 	else
 		chorusON = true;
 }
+
 /*-------------------------------------------------------*/
 void Chorus_switch(uint8_t val) {
 	if (val == MIDI_MAXi) {
@@ -735,6 +758,7 @@ void Phaser_switch(uint8_t val) {
 void FM_OP1_freq_set(uint8_t val) {
 	FM_op_freq_set(&op1, val);
 }
+
 /*-------------------------------------------------------*/
 void FM_OP1_modInd_set(uint8_t val) {
 	FM_op_modInd_set(&op1, val);
@@ -746,12 +770,14 @@ void FM_OP2_freq_set(uint8_t val) {
 	op2.mul = Lin2Exp(val, 0.2f, 32.f); // the freq of op2 is a multiple of the main pitch freq (op1)
 	//op2.mul = roundf(32 * val/MIDI_MAX);
 }
+
 /*-------------------------------------------------------*/
 void FM_OP2_freqMul_inc(uint8_t val) {
 	if (val == MIDI_MAXi) {
 		op2.mul *= 1.01f;
 	}
 }
+
 /*-------------------------------------------------------*/
 void FM_OP2_freqMul_dec(uint8_t val) {
 	if (val == MIDI_MAXi) {
@@ -767,6 +793,7 @@ void FM_OP2_modInd_set(uint8_t val) {
 void FM_OP3_freq_set(uint8_t val) {
 	op3.mul = Lin2Exp(val, 0.2f, 32.f); // the freq of op3 is a multiple of the main pitch freq (op1)
 }
+
 /*-------------------------------------------------------*/
 void FM_OP3_modInd_set(uint8_t val) {
 	FM_op_modInd_set(&op3, val);
@@ -777,20 +804,24 @@ void FM_OP3_freqMul_inc(uint8_t val) {
 		op3.mul *= 1.01f;
 	}
 }
+
 /*-------------------------------------------------------*/
 void FM_OP3_freqMul_dec(uint8_t val) {
 	if (val == MIDI_MAXi) {
 		op3.mul *= 0.99f;
 	}
 }
+
 /*-------------------------------------------------------*/
 void FM_OP4_freq_set(uint8_t val) {
 	op4.mul = Lin2Exp(val, 0.2f, 32.f); // the freq of op4 is a multiple of the main pitch freq (op1)
 }
+
 /*-------------------------------------------------------*/
 void FM_OP4_modInd_set(uint8_t val) {
 	FM_op_modInd_set(&op4, val);
 }
+
 /*-------------------------------------------------------*/
 void FM_OP4_freqMul_inc(uint8_t val) {
 	if (val == MIDI_MAXi) {
@@ -817,6 +848,7 @@ float_t _ITCMRAM_ FM1_sampleCompute(void) // op4 -> op3 -> op2 -> op1 => sound
 
 	return op1.out;
 }
+
 /*-----------------------------------------------------------------------------------------------*/
 float_t _ITCMRAM_ FM2_sampleCompute(float frq) //  (op2 -> op1) + (op4 -> op3) => sound
 		{
@@ -832,18 +864,22 @@ float_t _ITCMRAM_ FM2_sampleCompute(float frq) //  (op2 -> op1) + (op4 -> op3) =
 
 	return 0.5f * (op1.out + op3.out);
 }
+
 /*-------------------------------------------------------*/
 void DriftOsc1_amp_set(uint8_t val) {
 	DriftOsc_amp_set(&driftosc, val);
 }
+
 /*-------------------------------------------------------*/
 void DriftOsc1_minFreq_set(uint8_t val) {
 	DriftOsc_minFreq_set(&driftosc, val);
 }
+
 /*-------------------------------------------------------*/
 void DriftOsc1_maxFreq_set(uint8_t val) {
 	DriftOsc_maxFreq_set(&driftosc, val);
 }
+
 /*-------------------------------------------------------*/
 void DriftOsc1_centralFreq_set(uint8_t val) {
 	DriftOsc_centralFreq_set(&driftosc, val);
@@ -868,23 +904,23 @@ void metro_tempo_set(uint8_t val) {
 /*--------------------------------------------------------------------------------------------*/
 void metro2_tempo_set(uint8_t val) {
 	metro_setBPM(&metro2, rational_midi_get(val) * metro_getBPM(&metro1)); // unit : bpm
-
 }
 
 /*--------------------------------------------------------------------------------------------*/
 void metro3_tempo_set(uint8_t val) {
 	metro_setBPM(&metro3, rational_midi_get(val) * metro_getBPM(&metro1)); // unit : bpm
-
 }
 
 /*--------------------------------------------------------------------------------------------*/
 void metro1_proba_set(uint8_t val) {
 	proba1 = val / MIDI_MAX;
 }
+
 /*-------------------------------------------------------*/
 void metro2_proba_set(uint8_t val) {
 	proba2 = val / MIDI_MAX;
 }
+
 /*-------------------------------------------------------*/
 void metro3_proba_set(uint8_t val) {
 	proba3 = val / MIDI_MAX;
@@ -931,6 +967,7 @@ void MagicFX(uint8_t val) /* random effects parameters */
 		}
 	}
 }
+
 /*-----------------------------------------------------------------------------*/
 void MagicPatch(uint8_t val) /* Create a new sound with random sound parameters */
 {
@@ -1176,6 +1213,24 @@ float _ITCMRAM_ waveCompute(uint8_t sound, float frq) {
 	return y;
 }
 
+void change_instru_cmd(void)
+{
+	if (drummerON)
+	{
+		drummerON = false;
+		desynkatorON = false;
+		reverbON = true;
+	} else
+	{
+		drummerON = true;
+		desynkatorON = false;
+		reverbON = false;
+		delayON = true;
+		Delay_init();
+		phaserON = false;
+		chorusON = false;
+	}
+}
 /*==========================================================================================================================*/
 /*
  *	 Main sound generator function
@@ -1196,10 +1251,75 @@ void _ITCMRAM_ make_sound(uint16_t *buf, uint16_t length) // To be used with the
 	outp = buf;
 
 	for (uint16_t frame = 0; frame < length; frame++) {
-		/*--------------------------------------- Desynkator synth -----------------------------------------------------*/
 
-		if (desynkatorON) {
+		if (drummerON) {
+			/*--------------------------------------- Drummer synth -----------------------------------------------------*/
 
+			if (reverbON)
+				reverbON = false;
+			if (!delayON)
+				delayON = true;
+
+			float t = tick.Process();
+			if (t) {
+
+				drumcnt++;
+				bd.SetAccent(random() / (float) RAND_MAX);
+				bd.SetDirtiness(random() / (float) RAND_MAX);
+				bd.SetDecay(random() / (float) RAND_MAX);
+
+				sd.SetAccent(random() / (float) RAND_MAX);
+				sd.SetDecay(random() / (float) RAND_MAX);
+				sd.SetSnappy(random() / (float) RAND_MAX);
+
+				abd.SetTone(.7f * random() / (float) RAND_MAX);
+				abd.SetDecay(random() / (float) RAND_MAX);
+				abd.SetSelfFmAmount(random() / (float) RAND_MAX);
+
+				asd.SetDecay(random() / (float) RAND_MAX);
+				asd.SetSnappy(random() / (float) RAND_MAX);
+				asd.SetTone(.8f * random() / (float) RAND_MAX);
+
+				hihat.SetDecay(random() / (float) RAND_MAX);
+				hihat.SetSustain((random() / (float) RAND_MAX) > .8f);
+				hihat.SetTone(random() / (float) RAND_MAX);
+				hihat.SetNoisiness(random() / (float) RAND_MAX);
+			}
+			switch (drumcnt % 3) {
+			case 0:
+				y = 0.4
+						* (bd.Process(t) + sd.Process(0) + hihat.Process(0));
+								//+ asd.Process(0) + hihat.Process(0));
+				break;
+			case 1:
+				y = 0.4
+						* (bd.Process(0) + sd.Process(t) + hihat.Process(0));
+								//+ asd.Process(0) + hihat.Process(0));
+				break;
+			case 2:
+				y = 0.4
+						* (bd.Process(0) + sd.Process(0) + hihat.Process(t));
+								//+ asd.Process(0) + hihat.Process(0));
+				break;
+//			case 3:
+//				y = 0.2
+//						* (bd.Process(0) + sd.Process(0) + abd.Process(0)
+//								+ asd.Process(t) + hihat.Process(0));
+//				break;
+//			case 4:
+//				y = 0.2
+//						* (bd.Process(0) + sd.Process(0) + abd.Process(0)
+//								+ asd.Process(0) + hihat.Process(t));
+//				break;
+//			case 5:
+//				y = 0.2
+//						* (bd.Process(0) + sd.Process(0) + abd.Process(0)
+//								+ asd.Process(0) + hihat.Process(t));
+//				break;
+			}
+
+		} else if (desynkatorON) {
+			/*--------------------------------------- Desynkator synth -----------------------------------------------------*/
 			clock1 = metro_process(&metro1);
 			clock2 = metro_process(&metro2);
 			clock3 = metro_process(&metro3);
@@ -1306,7 +1426,9 @@ void _ITCMRAM_ make_sound(uint16_t *buf, uint16_t length) // To be used with the
 					* (1 + OpSampleCompute(&amp_lfo, WTSIN));
 			y1 *= vol1 * env1; // apply volume and envelop
 
-			if (adsr.cnt_ >= (uint32_t) lrintf(0.5f * SAMPLERATE / metro_getFreq(&metro1))) // 50% gate time
+			if (adsr.cnt_
+					>= (uint32_t) lrintf(
+							0.5f * SAMPLERATE / metro_getFreq(&metro1))) // 50% gate time
 				ADSR_keyOff(&adsr);
 
 			env2 = ADSR_computeSample(&adsr2)
@@ -1314,14 +1436,16 @@ void _ITCMRAM_ make_sound(uint16_t *buf, uint16_t length) // To be used with the
 			y2 *= vol2 * env2; // apply volume and envelop
 
 			if (adsr2.cnt_
-					>= (uint32_t) lrintf(0.5f * SAMPLERATE / metro_getFreq(&metro2))) // 50% gate time
+					>= (uint32_t) lrintf(
+							0.5f * SAMPLERATE / metro_getFreq(&metro2))) // 50% gate time
 				ADSR_keyOff(&adsr2);
 
 			env3 = ADSR_computeSample(&adsr3);
 			y3 *= vol3 * env3; // apply volume and envelop
 
 			if (adsr3.cnt_
-					>= (uint32_t) lrintf(0.5f * SAMPLERATE / metro_getFreq(&metro3))) // 50% gate time
+					>= (uint32_t) lrintf(
+							0.5f * SAMPLERATE / metro_getFreq(&metro3))) // 50% gate time
 				ADSR_keyOff(&adsr3);
 
 			/*--- Apply filter effect ---*/
@@ -1401,14 +1525,21 @@ void _ITCMRAM_ make_sound(uint16_t *buf, uint16_t length) // To be used with the
 		/*--- Apply stereo chorus/flanger effect ---*/
 		if (chorusON)
 			stereoChorus_compute(&yL, &yR, y);
-		else
-			yL = yR = y;
+		else {
+			yL = y;
+			yR = y;
+		}
 
-		verb.Process(yL, yR, &zL, &zR);
+		if (reverbON) {
+			verb.Process(yL, yR, &zL, &zR);
+		} else {
+			zL = yL;
+			zR = yR;
+		}
 
-		/*--- DC removing ---*/
-		zL = dcblock.Process(zL);
-		zR = dcblock.Process(zR);
+//		/*--- DC removing ---*/
+//		zL = dcblock.Process(zL);
+//		zR = dcblock.Process(zR);
 
 		/*--- clipping ---*/
 		zL = (zL > 1.0f) ? 1.0f : zL; //clip too loud left samples
@@ -1417,9 +1548,9 @@ void _ITCMRAM_ make_sound(uint16_t *buf, uint16_t length) // To be used with the
 		zR = (zR > 1.0f) ? 1.0f : zR; //clip too loud right samples
 		zR = (zR < -1.0f) ? -1.0f : zR;
 
-		/****** let's hear the new sample *******/
-		*outp++ = (uint16_t) ((int16_t) ((32767.0f) * zL)); // left channel sample, conversion float -> int16 !!!???
-		*outp++ = (uint16_t) ((int16_t) ((32767.0f) * zR)); // right channel sample
+		/****** Convert the new sample for DAC *******/
+		*outp++ = (uint16_t) (lrintf(32767.0f * zL)); // left channel sample
+		*outp++ = (uint16_t) (lrintf(32767.0f * zR)); // right channel sample
 
 //		/*--- clipping ---*/
 //		yL = (yL > 1.0f) ? 1.0f : yL; //clip too loud left samples
