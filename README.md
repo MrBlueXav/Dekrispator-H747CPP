@@ -25,11 +25,19 @@ https://polymerickblue.bandcamp.com/track/desynkator-i
 https://polymerickblue.bandcamp.com/track/desynkator-ii  
 https://polymerickblue.bandcamp.com/track/desynkator-iii  
 
-DaisySP library from Electrosmith is now included
+DaisySP library from Electrosmith is now included.
 
 ----
 
-# General features :
+# Technical features :
+
+* Very basic LCD use at the moment, no touch-screen. 
+* Joystick up/down controls volume.   
+* "wake-up" button freezes/unfreezes evolution of sounds.
+* LED information :
+	* The red LED lights on when a system error occurs.  
+	* The green LED indicates a midi usb device is connected and recognized.  
+	* The blue LED indicates midi activity.  
 
 * Patch memory in QSPI Flash (save/load/erase all) : 32 locations currently.
 * M4 core (at 200 MHz) manages MIDI USB Host function (stable with my old Korg NanoKontrol !), sends debug infos on UART and LCD, manages patch memory and sends MIDI messages to control M7 core. Use CN1 to connect your midi device.
@@ -39,13 +47,9 @@ DaisySP library from Electrosmith is now included
 * CPU load is displayed (CM7 only).
 * Each core communicates through *openAMP* infrastructure and shared memory, small messages are serialized with *Binn* library (probably overkill).    
 * MIDI Control Changes definitions are in a table of functions "ControlChangeFunctionsTable[128]" in MIDI_application.c file.
+* soundgen.cpp is the main synth file.
 * AUDIO_BUFFER_SIZE is defined in audio_play.h file.
-* Very basic LCD use at the moment, no touch-screen. 
-* Joystick up/down controls volume.
-* LED information :
-	* The red LED lights on when a system error occurs.  
-	* The green LED indicates a midi usb device is connected and recognized.  
-	* The blue LED indicates midi activity.  
+* SDRAM is configured and usable.   
 
 * Debug messages sent with virtual com port from STlink (USART1 --> USB CN2).  
 		PC Terminal configuration is as follows:   
@@ -58,6 +62,7 @@ DaisySP library from Electrosmith is now included
 
 I encountered endless issues to make this project work and suffered a lot... ;-)) I hope some people will find it useful and could use it as an audio synth platform !  
 It was first a STM32CubeMX project (the only way I found to reach that point) but can't be regenerated now, be careful ! I left the .ioc file for info only.  
+Beware ! This is not professional code, it's a hobby for me.
 
 
 You should be able to import the project in STM32CubeIDE, I think all necessary files are in the repository.  
@@ -86,6 +91,7 @@ Be sure to power your board with good PSU (> 1.5 A ?) especially with use of a m
 	* echo  
 	* phaser  
 	* stereo chorus/flanger  
+	* reverb (from DaisySP)   
 	
  * random sound and FX patch generator
  	

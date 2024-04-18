@@ -383,7 +383,6 @@ void Memory_erase(uint8_t val)
 		if (patchMemoryCtl.validation == false)
 		{
 			patchMemoryCtl.validation = true;
-			//send_string_to_CM4("Erase patch memory ?\n");
 			send_erase_request_to_CM4();
 		}
 		else
@@ -556,10 +555,17 @@ void Freeze_toggle(uint8_t val)
 	if (val == MIDI_MAXi)
 	{
 		freezeON = !freezeON;
-	}
-	if (freezeON && demoModeON)
-	{
-		demoModeON = false;
+		if (freezeON)
+		{
+			send_string_to_CM4("Frozen !");
+			if (demoModeON)
+				demoModeON = false;
+		}
+		else
+		{
+			send_string_to_CM4("Unfrozen !");
+			demoModeON = true;
+		}
 	}
 }
 /*---------------------------------------------------------*/
@@ -672,7 +678,6 @@ void toggleVibrato(void)
 void VibratoAmp_set(uint8_t val)
 {
 	vibr_lfo.amp = MAX_VIBRATO_AMP / MIDI_MAX * val;
-	//send_string_to_CM4("Setting vibrato amplitude !\n");
 }
 /*-------------------------------------------------------*/
 void VibratoFreq_set(uint8_t val)

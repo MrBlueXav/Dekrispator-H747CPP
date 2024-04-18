@@ -52,6 +52,7 @@ static volatile int message_received;
 //static volatile uint32_t received_number;
 static struct rpmsg_endpoint rp_endpoint;
 static char string_message[100];
+static char *blank_message = "                              ";
 static uint8_t sector8Kbuffer[SUBSECTOR_SIZE];
 static SynthPatch_t *patch;
 static char *strg;
@@ -60,6 +61,7 @@ static volatile bool SEV_received;
 static volatile uint32_t JoyPinPressed = 0;
 static volatile uint32_t Joy_State;
 static volatile bool joyOn;
+static volatile bool pushbuttonON;
 
 /* message buffers variables in SRAM4 */
 volatile uint8_t *buf_cm4_to_cm7 = (void*) BUFF_CM4_TO_CM7_ADDR;
@@ -96,6 +98,7 @@ void openamp_init(void)
 	JoyPinPressed = 0;
 	Joy_State = JOY_NONE;
 	joyOn = false;
+	pushbuttonON = false;
 
 }
 /*----------------------------------------------------------------------------------------------------------------*/
@@ -237,6 +240,11 @@ void midipacket_sendToCM7(midi_package_t packet)
 }
 
 /*------------------------------------------------------------------------------------------------*/
+void BSP_PB_Callback(Button_TypeDef Button)
+{
+	pushbuttonON = true;
+}
+/*------------------------------------------------------------------------------------------------*/
 void BSP_JOY_Callback(JOY_TypeDef JOY, uint32_t JoyPin)
 {
 	JoyPinPressed = JoyPin;
@@ -254,6 +262,15 @@ void Application_Process(void) // called in main() loop (main_cm4.c)
 		printf("SEV signal from CM7 received !\n");
 		patch = (SynthPatch_t*) buf_cm7_to_cm4;
 		SEV_received = false;
+	}
+
+	/*------- read wake-up button ---------------*/
+	if (pushbuttonON)
+	{
+		printf("Button pushed !\n");
+		pack.ALL = TOG_FREEZE_CMD;
+		midipacket_sendToCM7(pack);
+		pushbuttonON = false; // Button action done
 	}
 
 	/*------- read joystick ---------------*/
@@ -332,7 +349,8 @@ void Application_Process(void) // called in main() loop (main_cm4.c)
 				pack.ALL = LOAD_PATCH_CMD;
 				midipacket_sendToCM7(pack);
 				printf("Patch # %u loaded !\n", loc + 1); /* hope it's been loaded ! */
-				sprintf(string_message, "Patch # %u loaded !           ", loc + 1);
+				sprintf(string_message, "Patch # %u loaded !", loc + 1);
+				UTIL_LCD_DisplayStringAt(201, 297, (uint8_t*) blank_message, LEFT_MODE); // Erase message window
 				UTIL_LCD_DisplayStringAt(201, 297, (uint8_t*) string_message, LEFT_MODE);
 			}
 			break;
@@ -361,15 +379,17 @@ void Application_Process(void) // called in main() loop (main_cm4.c)
 
 		case 'R': /* request for erase memory */
 			printf("Erase all patches ?\n");
-			UTIL_LCD_DisplayStringAt(201, 297, (uint8_t*) "Erase all patches ?           ", LEFT_MODE);
+			UTIL_LCD_DisplayStringAt(201, 297, (uint8_t*) blank_message, LEFT_MODE); // Erase message window
+			UTIL_LCD_DisplayStringAt(201, 297, (uint8_t*) "Erase all patches ?", LEFT_MODE);
 			break;
 
 		case 'E': /* erase memory */
-			UTIL_LCD_DisplayStringAt(201, 297, (uint8_t*) "                        ", LEFT_MODE);
+			UTIL_LCD_DisplayStringAt(201, 297, (uint8_t*) blank_message, LEFT_MODE);
 			if (BSP_QSPI_EraseBlock(0, PATCH_MEMORY_START_ADDRESS, BSP_QSPI_ERASE_128K) == BSP_ERROR_NONE)
 			{
 				printf("All patches erased ! \n");
-				UTIL_LCD_DisplayStringAt(201, 297, (uint8_t*) "All patches erased !          ", LEFT_MODE);
+				UTIL_LCD_DisplayStringAt(201, 297, (uint8_t*) blank_message, LEFT_MODE); // Erase message window
+				UTIL_LCD_DisplayStringAt(201, 297, (uint8_t*) "All patches erased !", LEFT_MODE);
 				//patch = binn_object_blob(messageBuffer, "patch", &received_data_len);
 				//printf("Size of Init patch is : %d bytes.\n", sizeof(*patch));
 				write_initPatch_to_sector8Kbuffer(patch);
@@ -390,6 +410,7 @@ void Application_Process(void) // called in main() loop (main_cm4.c)
 			break;
 
 		case 'S': /* print any string */
+			UTIL_LCD_DisplayStringAt(201, 297, (uint8_t*) blank_message, LEFT_MODE); // Erase message window
 			strg = binn_object_str(messageBuffer, "string");
 			UTIL_LCD_DisplayStringAt(201, 297, (uint8_t*) strg, LEFT_MODE);
 			printf(strg);
@@ -415,7 +436,7 @@ void Application_Process(void) // called in main() loop (main_cm4.c)
 			break;
 
 		case 'B': // clear message
-			UTIL_LCD_DisplayStringAt(201, 297, (uint8_t*) "                              ", LEFT_MODE);
+			UTIL_LCD_DisplayStringAt(201, 297, (uint8_t*) blank_message, LEFT_MODE);
 			break;
 
 		default:

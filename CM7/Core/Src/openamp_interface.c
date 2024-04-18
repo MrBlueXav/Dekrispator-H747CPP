@@ -120,7 +120,7 @@ void send_patch_to_CM4(SynthPatch_t *patch)
 }
 
 /*-------------------------------------------------------------------------------------*/
-void send_string_to_CM4(char *str)
+void send_string_to_CM4(const char *str)
 {
 	obj = binn_object();
 	binn_object_set_uint8(obj, "cmd", 'S'); // command 'S' = send string

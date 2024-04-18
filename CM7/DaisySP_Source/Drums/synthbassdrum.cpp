@@ -82,7 +82,7 @@ inline float SyntheticBassDrum::DistortedSine(float phase,
     phase            = phase_fractional;
     float triangle   = (phase < 0.5f ? phase : 1.0f - phase) * 4.0f - 1.0f;
     float sine       = 2.0f * triangle / (1.0f + fabsf(triangle));
-    float clean_sine = sin(TWOPI_F * (phase + 0.75f));
+    float clean_sine = sinf(TWOPI_F * (phase + 0.75f));
     return sine + (1.0f - dirtiness) * (clean_sine - sine);
 }
 

@@ -39,6 +39,7 @@ extern "C" {
 #define VOL_DEC_CMD				0x01020000
 #define LOAD_PATCH_CMD			0x01030000
 #define CHG_INSTR_CMD			0x01040000
+#define TOG_FREEZE_CMD			0x01050000
 
 /*****************************************************************************************************************/
 #define _DTCMRAM_				__attribute__((section(".DTCMRAM_section_bss")))

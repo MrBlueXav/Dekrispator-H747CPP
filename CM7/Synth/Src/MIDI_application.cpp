@@ -277,6 +277,10 @@ void ProcessReceivedMidiDatas(midi_package_t pack)
 	{
 		change_instru_cmd();
 	}
+	else if (pack.ALL == TOG_FREEZE_CMD)
+	{
+		Freeze_toggle(MIDI_MAXi);
+	}
 }
 
 /*-----------------------------------------------------------------------------*/

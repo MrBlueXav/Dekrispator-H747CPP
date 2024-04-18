@@ -82,7 +82,6 @@ void cyc_count_print(void) // put this just after the function to measure
 	{
 		perf.average = perf.sum / perf.count;
 		send_integer_to_CM4((uint32_t)roundf(perf.average));
-		//send_string_to_CM4("Ceci est un message !\n");
 		oldtime = ticktime;
 		perf.sum = 0.0f;
 		perf.count = 0;
