@@ -34,7 +34,7 @@ extern "C" {
 #define USE_THE_LCD				1
 #define BACKGRND_ADDR			((uint32_t *)0x97E80000) /* address in QSPI Flash for background image  : 0x90000000 + 128MB - 1.5MB */
 
-/***************************************** Messages for CM7 ************************************************************/
+/***************************************** Special MIDI messages from CM4 for CM7 ************************************************************/
 #define VOL_INC_CMD				0x01010000
 #define VOL_DEC_CMD				0x01020000
 #define LOAD_PATCH_CMD			0x01030000

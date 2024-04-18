@@ -22,7 +22,8 @@ int8_t velocity _DTCMRAM_;
 extern bool g_sequencerIsOn;
 
 /*-----------------------------------------------------------------------------*/
-void Do_____nothing(uint8_t val) {
+void Do_____nothing(uint8_t val)
+{
 } /* for ControlFunctionsTable[] */
 
 /*------------------------------MIDI CC implementation----------------------------------------*/
@@ -160,63 +161,78 @@ void (*const ControlChangeFunctionsTable[128])(uint8_t val) =
 };
 
 /*-----------------------------------------------------------------------------*/
-void Reset_notes_On(void) {
+void Reset_notes_On(void)
+{
 	notesCount = 0;
 	for (uint8_t i = 0; i < 128; i++)
 		notes_On[i] = 0;
 }
 
 /*-----------------------------------------------------------------------------*/
-void ProcessReceivedMidiDatas(midi_package_t pack) {
-	if (g_sequencerIsOn == false) {
+void ProcessReceivedMidiDatas(midi_package_t pack)
+{
+	if (g_sequencerIsOn == false)
+	{
 		if ((pack.evnt0 & 0xF0) == 0x80) // Note off ? -------------------------------
-				{
+		{
 			uint8_t noteOff = pack.evnt1;
 			notes_On[noteOff] = 0;
 			notesCount--;
 			if (notesCount <= 0) // no more keys pressed
-					{
+			{
 				ADSRkeyOFF();
 				notesCount = 0;
-			} else // some keys still pressed... (legato)
+			}
+			else // some keys still pressed... (legato)
 			{
 				if ((noteOff - LOWEST_NOTE) == currentNote) // then let sound the lowest key pressed
-						{
+				{
 					uint8_t i;
-					for (i = 0; i < 128; i++) {
+					for (i = 0; i < 128; i++)
+					{
 						if (notes_On[i] == 1) // find the lowest key pressed
 							break;
 					}
 					currentNote = i - LOWEST_NOTE; // conversion for notesFreq[]
 				}
 			}
-		} else if ((pack.evnt0 & 0xF0) == 0x90) // Note on ----------------------------
-				{
+		}
+		else if ((pack.evnt0 & 0xF0) == 0x90) // Note on ----------------------------
+		{
 			uint8_t noteOn = pack.evnt1;
 			velocity = pack.evnt2;
 			if (velocity > 0) // True note on !
-					{
+			{
 				if (noteOn < LOWEST_NOTE) // filtering notes
 				{
 					currentNote = 0;
-				} else {
+				}
+				else
+				{
 					currentNote = noteOn - LOWEST_NOTE; // conversion for notesFreq[]
 				}
 
 				ADSRkeyON();
 				notesCount++;
 				notes_On[noteOn] = 1;
-			} else {
+			}
+			else
+			{
 				// ---------  Sometimes Note On with zero velocity means Note Off !
 				notes_On[noteOn] = 0;
 				notesCount--;
-				if (notesCount <= 0) {
+				if (notesCount <= 0)
+				{
 					ADSRkeyOFF();
 					notesCount = 0;
-				} else {
-					if ((noteOn - LOWEST_NOTE) == currentNote) {
+				}
+				else
+				{
+					if ((noteOn - LOWEST_NOTE) == currentNote)
+					{
 						uint8_t i;
-						for (i = 0; i < 128; i++) {
+						for (i = 0; i < 128; i++)
+						{
 							if (notes_On[i] == 1) // find the lowest key pressed
 								break;
 						}
@@ -224,11 +240,13 @@ void ProcessReceivedMidiDatas(midi_package_t pack) {
 					}
 				}
 			}
-		} else if ((pack.evnt0 & 0xF0) == 0xA0) // Aftertouch
-				{
+		}
+		else if ((pack.evnt0 & 0xF0) == 0xA0) // Aftertouch
+		{
 			// Filter1Res_set(pack.evnt2);
-		} else if ((pack.evnt0 & 0xF0) == 0xE0) // Pitch Bend
-				{
+		}
+		else if ((pack.evnt0 & 0xF0) == 0xE0) // Pitch Bend
+		{
 			// int16_t pitchBend = ((pack.evnt1 << 7) + pack.evnt2) - 0x2000;
 		}
 	}
@@ -239,16 +257,24 @@ void ProcessReceivedMidiDatas(midi_package_t pack) {
 	{
 		ControlChangeFunctionsTable[pack.evnt1](pack.evnt2);
 
-	} else if (pack.ALL == VOL_INC_CMD) {
+	}
+	else if (pack.ALL == VOL_INC_CMD)
+	{
 		incVol();
 
-	} else if (pack.ALL == VOL_DEC_CMD) {
+	}
+	else if (pack.ALL == VOL_DEC_CMD)
+	{
 		decVol();
 
-	} else if (pack.ALL == LOAD_PATCH_CMD) {
+	}
+	else if (pack.ALL == LOAD_PATCH_CMD)
+	{
 		load_patch_cmd();
 
-	} else if (pack.ALL == CHG_INSTR_CMD) {
+	}
+	else if (pack.ALL == CHG_INSTR_CMD)
+	{
 		change_instru_cmd();
 	}
 }

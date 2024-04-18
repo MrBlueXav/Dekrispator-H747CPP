@@ -1,14 +1,20 @@
 
-# Dekrispator for STM32H747
+# Dekrispator H747CPP for STM32H747 (C++ version)
 
 ----
 
 ![alt text](./misc/dekrispatorH747.jpg)
 
 
-Hello ! I'm happy (maybe even proud ;-)) to share this project with you.  
-It's a new improved **Dekrispator** synth ported on a more powerful dual core mcu development board : *Discovery Kit STM32H747I-DISCO* from STMicroelectronics.  
-There's also a new instrument called **Desynkator** which is like three metronomic sound generators synchronized in rational ratios tempi with adjustable probabilities. It shares the same controls and FX as Dekrispator. CC78 enables toggling between the two instruments.  
+
+This is the C++ version of **Dekrispator** synth ported on a powerful dual core mcu development board : *Discovery Kit STM32H747I-DISCO* from STMicroelectronics.  
+Actually, it's a mix of C and C++ files but allowing now use of C++ DaisySP lib for example.
+There are two additional instruments :  
+
+* **Desynkator** which is like three metronomic sound generators synchronized in rational ratios tempi with adjustable probabilities. It shares the same controls and FX as Dekrispator.  
+* **Drumzator** which is a very simple demo of DaisySP percussion modules.  
+CC78 and joystick/right enables toggling between the instruments.  
+
 It's an expensive board but I had the opportunity to get one for free but with a damaged LCD, so I could work on a version which would clearly separate USB and audio with the two embedded cores.  
 Of course, at that cost (about 100€), maybe a raspberry Pi would be a better option (less hassle with hardware configuration) but it's another universe !
 
@@ -19,22 +25,24 @@ https://polymerickblue.bandcamp.com/track/desynkator-i
 https://polymerickblue.bandcamp.com/track/desynkator-ii  
 https://polymerickblue.bandcamp.com/track/desynkator-iii  
 
+DaisySP library from Electrosmith is now included
+
 ----
 
 # General features :
 
-* Patch memory in QSPI Flash (save/load/erase all) : 32 locations currently
-* M4 core (at 200 MHz) manages MIDI USB Host function (stable with my old Korg NanoKontrol !) sends debug infos on UART and LCD, manages patch memory. Use CN1 to connect your midi device.
+* Patch memory in QSPI Flash (save/load/erase all) : 32 locations currently.
+* M4 core (at 200 MHz) manages MIDI USB Host function (stable with my old Korg NanoKontrol !), sends debug infos on UART and LCD, manages patch memory and sends MIDI messages to control M7 core. Use CN1 to connect your midi device.
 * M7 core (at 400 MHz) computes sound.      
 * No RTOS
-* Samplerate is 48kHz and audio samples are 16 bits large      
-* CPU load is displayed (CM7 only)
+* Samplerate is 48kHz and audio samples are 16 bits large.      
+* CPU load is displayed (CM7 only).
 * Each core communicates through *openAMP* infrastructure and shared memory, small messages are serialized with *Binn* library (probably overkill).    
 * MIDI Control Changes definitions are in a table of functions "ControlChangeFunctionsTable[128]" in MIDI_application.c file.
 * AUDIO_BUFFER_SIZE is defined in audio_play.h file.
 * Very basic LCD use at the moment, no touch-screen. 
+* Joystick up/down controls volume.
 * LED information :
-	* The orange LED reflects the CPU usage : when it's weak CM7 CPU gets overloaded.  
 	* The red LED lights on when a system error occurs.  
 	* The green LED indicates a midi usb device is connected and recognized.  
 	* The blue LED indicates midi activity.  
@@ -83,7 +91,7 @@ Be sure to power your board with good PSU (> 1.5 A ?) especially with use of a m
  	
 ----
 
-**Special thanks** : Sean Bolton, Perry R. Cook and Gary P. Scavone, Gabriel Rivas, Ross Bencina, Julian Schmidt, GaryA, Thorsten Klose, erwincoumans, ElectroSmith/DaisySP, ST, openAMP, Binn
+**Special thanks** to many indirect contributers : Sean Bolton, Perry R. Cook and Gary P. Scavone, Gabriel Rivas, Ross Bencina, Julian Schmidt, GaryA, Thorsten Klose, erwincoumans, ElectroSmith/DaisySP, ST, openAMP, Binn
 
 ---- 
 

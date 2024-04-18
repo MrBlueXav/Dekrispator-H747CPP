@@ -118,7 +118,8 @@ void Synth_patch_save(SynthPatch_t *patch);
 
 /*============================================== Main Synth initialization =========================================*/
 
-void Synth_Init(void) {
+void Synth_Init(void)
+{
 
 	g_sequencerIsOn = true;
 	demoModeON = true;
@@ -209,7 +210,8 @@ void Synth_Init(void) {
 }
 
 /*--------------------------------------------------------------------------*/
-void get_datas_for_screen(volatile ScreenDatas_t *datas) {
+void get_datas_for_screen(volatile ScreenDatas_t *datas)
+{
 	datas->desynkatorON_par = desynkatorON && !demoModeON;
 	datas->dekrispatorON_par = demoModeON && !desynkatorON; // demoModeOn
 	datas->synthOn_par = !desynkatorON && !demoModeON;
@@ -233,7 +235,7 @@ void get_datas_for_screen(volatile ScreenDatas_t *datas) {
 
 /*--------------------------------------------------------------------------*/
 void Synth_patch_save(SynthPatch_t *patch) // save current synth settings in *patch structure.
-		{
+{
 	patch->desynkatorON_par = desynkatorON;
 	patch->autoFilterON_par = autoFilterON;
 	patch->delayON_par = delayON;
@@ -291,7 +293,7 @@ void Synth_patch_save(SynthPatch_t *patch) // save current synth settings in *pa
 
 /*--------------------------------------------------------------------------*/
 void Synth_patch_load(const SynthPatch_t *patch) // Load "patch" settings to synth.
-		{
+{
 	g_sequencerIsOn = true;
 	demoModeON = false;
 
@@ -354,30 +356,38 @@ void Synth_patch_load(const SynthPatch_t *patch) // Load "patch" settings to syn
 
 /******************************************  Sound functions   *******************************/
 
-void Soundpatch_save(uint8_t midival) {
-	if (midival == MIDI_MAXi) {
-		patchMemoryCtl.mypatch.memory_location =
-				patchMemoryCtl.currentPatchMemory;
+void Soundpatch_save(uint8_t midival)
+{
+	if (midival == MIDI_MAXi)
+	{
+		patchMemoryCtl.mypatch.memory_location = patchMemoryCtl.currentPatchMemory;
 		Synth_patch_save(&patchMemoryCtl.mypatch);
 		send_patch_to_CM4(&patchMemoryCtl.mypatch);
 	}
 }
 
 /*-------------------------------------------------------*/
-void Soundpatch_load(uint8_t midival) {
-	if (midival == MIDI_MAXi) {
+void Soundpatch_load(uint8_t midival)
+{
+	if (midival == MIDI_MAXi)
+	{
 		send_patch_request_to_CM4(patchMemoryCtl.currentPatchMemory);
 	}
 }
 
 /*---------------------------------------------------------*/
-void Memory_erase(uint8_t val) {
-	if (val == MIDI_MAXi) {
-		if (patchMemoryCtl.validation == false) {
+void Memory_erase(uint8_t val)
+{
+	if (val == MIDI_MAXi)
+	{
+		if (patchMemoryCtl.validation == false)
+		{
 			patchMemoryCtl.validation = true;
 			//send_string_to_CM4("Erase patch memory ?\n");
 			send_erase_request_to_CM4();
-		} else {
+		}
+		else
+		{
 			patchMemoryCtl.validation = false;
 			send_clear_message_to_CM4();
 		}
@@ -385,9 +395,12 @@ void Memory_erase(uint8_t val) {
 }
 
 /*---------------------------------------------------------*/
-void Memory_valid(uint8_t val) {
-	if (val == MIDI_MAXi) {
-		if (patchMemoryCtl.validation == true) {
+void Memory_valid(uint8_t val)
+{
+	if (val == MIDI_MAXi)
+	{
+		if (patchMemoryCtl.validation == true)
+		{
 			send_erase_all_patches_to_CM4(&patchMemoryCtl.initpatch);
 			patchMemoryCtl.validation = false;
 		}
@@ -395,59 +408,66 @@ void Memory_valid(uint8_t val) {
 }
 
 /*---------------------------------------------------------*/
-void Memory_dec(uint8_t val) {
-	if (val == MIDI_MAXi) {
+void Memory_dec(uint8_t val)
+{
+	if (val == MIDI_MAXi)
+	{
 		if (patchMemoryCtl.currentPatchMemory > 0)
 			(patchMemoryCtl.currentPatchMemory)--;
 		else
 			patchMemoryCtl.currentPatchMemory = LAST_PATCH;
 
-		patchMemoryCtl.mypatch.memory_location =
-				patchMemoryCtl.currentPatchMemory;
+		patchMemoryCtl.mypatch.memory_location = patchMemoryCtl.currentPatchMemory;
 		send_patch_location_to_CM4(patchMemoryCtl.currentPatchMemory);
 	}
 }
 
 /*---------------------------------------------------------*/
-void Memory_inc(uint8_t val) {
-	if (val == MIDI_MAXi) {
+void Memory_inc(uint8_t val)
+{
+	if (val == MIDI_MAXi)
+	{
 		if (patchMemoryCtl.currentPatchMemory < LAST_PATCH)
 			(patchMemoryCtl.currentPatchMemory)++;
 		else
 			patchMemoryCtl.currentPatchMemory = 0;
 
-		patchMemoryCtl.mypatch.memory_location =
-				patchMemoryCtl.currentPatchMemory;
+		patchMemoryCtl.mypatch.memory_location = patchMemoryCtl.currentPatchMemory;
 		send_patch_location_to_CM4(patchMemoryCtl.currentPatchMemory);
 	}
 }
 
 /*---------------------------------------------------------*/
-void nextSound(void) {
+void nextSound(void)
+{
 	if (sound < LAST_SOUND)
 		sound++;
 	else
 		sound = LAST_SOUND;
 }
 /*-------------------------------------------------------*/
-void prevSound(void) {
+void prevSound(void)
+{
 	if (sound > 0)
 		sound--;
 	else
 		sound = 0;
 }
 /*-------------------------------------------------------*/
-void Sound_set(uint8_t val) {
+void Sound_set(uint8_t val)
+{
 	sound = (uint8_t) rintf((LAST_SOUND - 1) / MIDI_MAX * val);
 }
 /*-------------------------------------------------------*/
-void autoSound_set(int8_t val) {
+void autoSound_set(int8_t val)
+{
 	autoSound = val;
 }
 /*---------------------------------------------------------*/
 void RandSound1(uint8_t val) /* random series of tones */
 {
-	if (val == MIDI_MAXi) {
+	if (val == MIDI_MAXi)
+	{
 		if (autoSound == 0)
 			autoSound = 1;
 		else
@@ -457,7 +477,8 @@ void RandSound1(uint8_t val) /* random series of tones */
 /*---------------------------------------------------------*/
 void RandSound2(uint8_t val) /* random series of tones */
 {
-	if (val == MIDI_MAXi) {
+	if (val == MIDI_MAXi)
+	{
 		if (autoSound == 0)
 			autoSound = 2;
 		else
@@ -465,43 +486,52 @@ void RandSound2(uint8_t val) /* random series of tones */
 	}
 }
 /*---------------------------------------------------------*/
-uint8_t soundNumber_get(void) {
+uint8_t soundNumber_get(void)
+{
 	return sound;
 }
 
 /*************************************** ADSR functions **************************************/
-void AttTime_set(uint8_t val) {
+void AttTime_set(uint8_t val)
+{
 	ADSR_setAttackTime(&adsr, 0.5f * val / MIDI_MAX);
 }
 
 /*---------------------------------------------------------*/
-void DecTime_set(uint8_t val) {
+void DecTime_set(uint8_t val)
+{
 	ADSR_setDecayTime(&adsr, .2 * val / MIDI_MAX + 0.0001f);
 }
 
 /*---------------------------------------------------------*/
-void SustLevel_set(uint8_t val) {
+void SustLevel_set(uint8_t val)
+{
 	ADSR_setSustainLevel(&adsr, val / MIDI_MAX);
 }
 
 /*---------------------------------------------------------*/
-void RelTime_set(uint8_t val) {
+void RelTime_set(uint8_t val)
+{
 	ADSR_setReleaseTime(&adsr, .5f * val / MIDI_MAX + 0.0001f);
 }
 
 /*---------------------------------------------------------*/
-void ADSRkeyON(void) {
+void ADSRkeyON(void)
+{
 	ADSR_keyOn(&adsr);
 }
 
 /*---------------------------------------------------------*/
-void ADSRkeyOFF(void) {
+void ADSRkeyOFF(void)
+{
 	ADSR_keyOff(&adsr);
 }
 
 /*---------------------------------------------------------*/
-void DemoMode_toggle(uint8_t val) {
-	if (val == MIDI_MAXi) {
+void DemoMode_toggle(uint8_t val)
+{
+	if (val == MIDI_MAXi)
+	{
 		demoModeON = true;
 		desynkatorON = false;
 		freezeON = false;
@@ -510,8 +540,10 @@ void DemoMode_toggle(uint8_t val) {
 }
 
 /*---------------------------------------------------------*/
-void Desynkator_toggle(uint8_t val) {
-	if (val == MIDI_MAXi) {
+void Desynkator_toggle(uint8_t val)
+{
+	if (val == MIDI_MAXi)
+	{
 		desynkatorON = true;
 		demoModeON = false;
 
@@ -519,17 +551,22 @@ void Desynkator_toggle(uint8_t val) {
 }
 
 /*---------------------------------------------------------*/
-void Freeze_toggle(uint8_t val) {
-	if (val == MIDI_MAXi) {
+void Freeze_toggle(uint8_t val)
+{
+	if (val == MIDI_MAXi)
+	{
 		freezeON = !freezeON;
 	}
-	if (freezeON && demoModeON) {
+	if (freezeON && demoModeON)
+	{
 		demoModeON = false;
 	}
 }
 /*---------------------------------------------------------*/
-void Synth_reset(uint8_t val) {
-	if (val == MIDI_MAXi) {
+void Synth_reset(uint8_t val)
+{
+	if (val == MIDI_MAXi)
+	{
 		Synth_Init();
 		demoModeON = false;
 		desynkatorON = false;
@@ -538,97 +575,119 @@ void Synth_reset(uint8_t val) {
 
 /******************************************   FILTERS FUNCTIONS ******************************/
 
-void Filter1Freq_set(uint8_t val) {
+void Filter1Freq_set(uint8_t val)
+{
 	float freq = Lin2Exp(val, MIN_FREQ, MAX_FREQ) / SAMPLERATE;
 	SVF_directSetFilterValue(&SVFilter1, freq);
 	SVF_refFreq_set(&SVFilter1, freq);
 }
 //------------------------------------------------------------------------------------
-void Filter1Res_set(uint8_t val) {
+void Filter1Res_set(uint8_t val)
+{
 	SVF_setReso(&SVFilter1, val / MIDI_MAX);
 }
 //------------------------------------------------------------------------------------
-void Filter1Drive_set(uint8_t val) {
+void Filter1Drive_set(uint8_t val)
+{
 	SVF_setDrive(&SVFilter1, val);
 }
 //------------------------------------------------------------------------------------
-void Filter1Type_set(uint8_t val) {
+void Filter1Type_set(uint8_t val)
+{
 	SVFilter1.type = (uint8_t) lrintf(FILTER_TYPES * val / MIDI_MAX);
 }
 
 //------------------------------------------------------------------------------------
-void Filter2Freq_set(uint8_t val) {
+void Filter2Freq_set(uint8_t val)
+{
 	float freq = Lin2Exp(val, MIN_FREQ, MAX_FREQ) / SAMPLERATE;
 	SVF_directSetFilterValue(&SVFilter2, freq);
 	SVF_refFreq_set(&SVFilter2, freq);
 }
 //------------------------------------------------------------------------------------
-void Filter2Res_set(uint8_t val) {
+void Filter2Res_set(uint8_t val)
+{
 	SVF_setReso(&SVFilter2, val / MIDI_MAX);
 }
 //------------------------------------------------------------------------------------
-void Filter2Drive_set(uint8_t val) {
+void Filter2Drive_set(uint8_t val)
+{
 	SVF_setDrive(&SVFilter2, val);
 }
 //------------------------------------------------------------------------------------
-void Filter2Type_set(uint8_t val) {
+void Filter2Type_set(uint8_t val)
+{
 	SVFilter2.type = (uint8_t) lrintf(FILTER_TYPES * val / MIDI_MAX);
 }
 
 /*-------------------------------------------------------*/
-void toggleFilter(void) {
+void toggleFilter(void)
+{
 	if (autoFilterON)
 		autoFilterON = false;
 	else
 		autoFilterON = true;
 }
 /*-------------------------------------------------------*/
-void Filter_Random_switch(uint8_t val) {
-	if (val == MIDI_MAXi) {
+void Filter_Random_switch(uint8_t val)
+{
+	if (val == MIDI_MAXi)
+	{
 		autoFilterON = !autoFilterON;
 	}
 }
 
 /*************************************** LFOs functions **************************************/
-void Filt1LFO_amp_set(uint8_t val) {
+void Filt1LFO_amp_set(uint8_t val)
+{
 	filt_lfo.amp = MAX_FILTER_LFO_AMP / MIDI_MAX * val;
 }
 /*-------------------------------------------------------*/
-void Filt1LFO_freq_set(uint8_t val) {
+void Filt1LFO_freq_set(uint8_t val)
+{
 	filt_lfo.freq = MAX_VIBRATO_FREQ / MIDI_MAX * val;
 }
 /*-------------------------------------------------------*/
-void Filt2LFO_amp_set(uint8_t val) {
+void Filt2LFO_amp_set(uint8_t val)
+{
 	filt2_lfo.amp = MAX_FILTER_LFO_AMP / MIDI_MAX * val;
 }
 /*-------------------------------------------------------*/
-void Filt2LFO_freq_set(uint8_t val) {
+void Filt2LFO_freq_set(uint8_t val)
+{
 	filt2_lfo.freq = MAX_VIBRATO_FREQ / MIDI_MAX * val;
 }
 /*-------------------------------------------------------*/
-void toggleVibrato(void) {
-	if (vibr_lfo.amp != 0) {
+void toggleVibrato(void)
+{
+	if (vibr_lfo.amp != 0)
+	{
 		vibr_lfo.last_amp = vibr_lfo.amp;
 		vibr_lfo.amp = 0;
-	} else
+	}
+	else
 		vibr_lfo.amp = vibr_lfo.last_amp;
 }
 /*-------------------------------------------------------*/
-void VibratoAmp_set(uint8_t val) {
+void VibratoAmp_set(uint8_t val)
+{
 	vibr_lfo.amp = MAX_VIBRATO_AMP / MIDI_MAX * val;
 	//send_string_to_CM4("Setting vibrato amplitude !\n");
 }
 /*-------------------------------------------------------*/
-void VibratoFreq_set(uint8_t val) {
+void VibratoFreq_set(uint8_t val)
+{
 	vibr_lfo.freq = MAX_VIBRATO_FREQ / MIDI_MAX * val;
 }
 
 /*-------------------------------------------------------*/
-void AmpLFO_amp_set(uint8_t val) {
+void AmpLFO_amp_set(uint8_t val)
+{
 	amp_lfo.amp = val / MIDI_MAX;
 }
 /*-------------------------------------------------------*/
-void AmpLFO_freq_set(uint8_t val) {
+void AmpLFO_freq_set(uint8_t val)
+{
 	amp_lfo.freq = MAX_VIBRATO_FREQ / MIDI_MAX * val;
 }
 
@@ -689,7 +748,8 @@ void AmpLFO_freq_set(uint8_t val) {
 //	op3.amp *= .8f;
 //}
 /*-------------------------------------------------------*/
-void SynthOut_amp_set(uint8_t val) {
+void SynthOut_amp_set(uint8_t val)
+{
 	float_t amp;
 	amp = (val * 5.f / MIDI_MAX) * (val * 5.f / MIDI_MAX);
 	op1.amp = amp;
@@ -709,22 +769,28 @@ void SynthOut_amp_set(uint8_t val) {
 }
 
 /******************************************** Reverb functions ********************************/
-void Reverb_length_set(uint8_t val) {
+void Reverb_length_set(uint8_t val)
+{
 	verb.SetFeedback(val / MIDI_MAX);
 }
 
 /******************************************** Delay functions ********************************/
-void Delay_toggle(void) {
-	if (delayON) {
+void Delay_toggle(void)
+{
+	if (delayON)
+	{
 		delayON = false;
 		Delay_clean();
-	} else
+	}
+	else
 		delayON = true;
 }
 
 /*-------------------------------------------------------*/
-void Delay_switch(uint8_t val) {
-	if (val == MIDI_MAXi) {
+void Delay_switch(uint8_t val)
+{
+	if (val == MIDI_MAXi)
+	{
 		delayON = !delayON;
 		if (delayON)
 			Delay_clean();
@@ -732,7 +798,8 @@ void Delay_switch(uint8_t val) {
 }
 
 /******************************************** Chorus functions *******************************/
-void Chorus_toggle(void) {
+void Chorus_toggle(void)
+{
 	if (chorusON)
 		chorusON = false;
 	else
@@ -740,104 +807,128 @@ void Chorus_toggle(void) {
 }
 
 /*-------------------------------------------------------*/
-void Chorus_switch(uint8_t val) {
-	if (val == MIDI_MAXi) {
+void Chorus_switch(uint8_t val)
+{
+	if (val == MIDI_MAXi)
+	{
 		chorusON = !chorusON;
 	}
 }
 
 /******************************************** Phaser functions *******************************/
-void Phaser_switch(uint8_t val) {
-	if (val == MIDI_MAXi) {
+void Phaser_switch(uint8_t val)
+{
+	if (val == MIDI_MAXi)
+	{
 		phaserON = !phaserON;
 	}
 }
 
 /****************************************** Oscillators functions ****************************/
 
-void FM_OP1_freq_set(uint8_t val) {
+void FM_OP1_freq_set(uint8_t val)
+{
 	FM_op_freq_set(&op1, val);
 }
 
 /*-------------------------------------------------------*/
-void FM_OP1_modInd_set(uint8_t val) {
+void FM_OP1_modInd_set(uint8_t val)
+{
 	FM_op_modInd_set(&op1, val);
 }
 
 /*-------------------------------------------------------*/
-void FM_OP2_freq_set(uint8_t val) {
+void FM_OP2_freq_set(uint8_t val)
+{
 	//FM_op_freq_set(&op2, val);
 	op2.mul = Lin2Exp(val, 0.2f, 32.f); // the freq of op2 is a multiple of the main pitch freq (op1)
 	//op2.mul = roundf(32 * val/MIDI_MAX);
 }
 
 /*-------------------------------------------------------*/
-void FM_OP2_freqMul_inc(uint8_t val) {
-	if (val == MIDI_MAXi) {
+void FM_OP2_freqMul_inc(uint8_t val)
+{
+	if (val == MIDI_MAXi)
+	{
 		op2.mul *= 1.01f;
 	}
 }
 
 /*-------------------------------------------------------*/
-void FM_OP2_freqMul_dec(uint8_t val) {
-	if (val == MIDI_MAXi) {
+void FM_OP2_freqMul_dec(uint8_t val)
+{
+	if (val == MIDI_MAXi)
+	{
 		op2.mul *= 0.99f;
 	}
 }
 /*-------------------------------------------------------*/
-void FM_OP2_modInd_set(uint8_t val) {
+void FM_OP2_modInd_set(uint8_t val)
+{
 	FM_op_modInd_set(&op2, val);
 }
 
 /*-------------------------------------------------------*/
-void FM_OP3_freq_set(uint8_t val) {
+void FM_OP3_freq_set(uint8_t val)
+{
 	op3.mul = Lin2Exp(val, 0.2f, 32.f); // the freq of op3 is a multiple of the main pitch freq (op1)
 }
 
 /*-------------------------------------------------------*/
-void FM_OP3_modInd_set(uint8_t val) {
+void FM_OP3_modInd_set(uint8_t val)
+{
 	FM_op_modInd_set(&op3, val);
 }
 /*-------------------------------------------------------*/
-void FM_OP3_freqMul_inc(uint8_t val) {
-	if (val == MIDI_MAXi) {
+void FM_OP3_freqMul_inc(uint8_t val)
+{
+	if (val == MIDI_MAXi)
+	{
 		op3.mul *= 1.01f;
 	}
 }
 
 /*-------------------------------------------------------*/
-void FM_OP3_freqMul_dec(uint8_t val) {
-	if (val == MIDI_MAXi) {
+void FM_OP3_freqMul_dec(uint8_t val)
+{
+	if (val == MIDI_MAXi)
+	{
 		op3.mul *= 0.99f;
 	}
 }
 
 /*-------------------------------------------------------*/
-void FM_OP4_freq_set(uint8_t val) {
+void FM_OP4_freq_set(uint8_t val)
+{
 	op4.mul = Lin2Exp(val, 0.2f, 32.f); // the freq of op4 is a multiple of the main pitch freq (op1)
 }
 
 /*-------------------------------------------------------*/
-void FM_OP4_modInd_set(uint8_t val) {
+void FM_OP4_modInd_set(uint8_t val)
+{
 	FM_op_modInd_set(&op4, val);
 }
 
 /*-------------------------------------------------------*/
-void FM_OP4_freqMul_inc(uint8_t val) {
-	if (val == MIDI_MAXi) {
+void FM_OP4_freqMul_inc(uint8_t val)
+{
+	if (val == MIDI_MAXi)
+	{
 		op4.mul *= 1.01f;
 	}
 }
 /*-------------------------------------------------------*/
-void FM_OP4_freqMul_dec(uint8_t val) {
-	if (val == MIDI_MAXi) {
+void FM_OP4_freqMul_dec(uint8_t val)
+{
+	if (val == MIDI_MAXi)
+	{
 		op4.mul *= 0.99f;
 	}
 }
 
 /*-----------------------------------------------------------------------------------------------*/
 float_t _ITCMRAM_ FM1_sampleCompute(void) // op4 -> op3 -> op2 -> op1 => sound
-		{
+{
 	OpSampleCompute(&op4, WTSIN); // The result is in op4.out !
 	op3.phase += op3.modInd * op4.out;
 	OpSampleCompute(&op3, WTSIN);
@@ -851,7 +942,7 @@ float_t _ITCMRAM_ FM1_sampleCompute(void) // op4 -> op3 -> op2 -> op1 => sound
 
 /*-----------------------------------------------------------------------------------------------*/
 float_t _ITCMRAM_ FM2_sampleCompute(float frq) //  (op2 -> op1) + (op4 -> op3) => sound
-		{
+{
 	float in;
 	op1.freq = frq;
 	op2.freq = op2.mul * frq;
@@ -866,28 +957,33 @@ float_t _ITCMRAM_ FM2_sampleCompute(float frq) //  (op2 -> op1) + (op4 -> op3) =
 }
 
 /*-------------------------------------------------------*/
-void DriftOsc1_amp_set(uint8_t val) {
+void DriftOsc1_amp_set(uint8_t val)
+{
 	DriftOsc_amp_set(&driftosc, val);
 }
 
 /*-------------------------------------------------------*/
-void DriftOsc1_minFreq_set(uint8_t val) {
+void DriftOsc1_minFreq_set(uint8_t val)
+{
 	DriftOsc_minFreq_set(&driftosc, val);
 }
 
 /*-------------------------------------------------------*/
-void DriftOsc1_maxFreq_set(uint8_t val) {
+void DriftOsc1_maxFreq_set(uint8_t val)
+{
 	DriftOsc_maxFreq_set(&driftosc, val);
 }
 
 /*-------------------------------------------------------*/
-void DriftOsc1_centralFreq_set(uint8_t val) {
+void DriftOsc1_centralFreq_set(uint8_t val)
+{
 	DriftOsc_centralFreq_set(&driftosc, val);
 }
 
 /************************************* Desynkator functions **********************************/
 
-void metro_tempo_set(uint8_t val) {
+void metro_tempo_set(uint8_t val)
+{
 	float fr1, fr2, fr3, frNew;
 
 	fr1 = metro_getFreq(&metro1);
@@ -902,33 +998,40 @@ void metro_tempo_set(uint8_t val) {
 }
 
 /*--------------------------------------------------------------------------------------------*/
-void metro2_tempo_set(uint8_t val) {
+void metro2_tempo_set(uint8_t val)
+{
 	metro_setBPM(&metro2, rational_midi_get(val) * metro_getBPM(&metro1)); // unit : bpm
 }
 
 /*--------------------------------------------------------------------------------------------*/
-void metro3_tempo_set(uint8_t val) {
+void metro3_tempo_set(uint8_t val)
+{
 	metro_setBPM(&metro3, rational_midi_get(val) * metro_getBPM(&metro1)); // unit : bpm
 }
 
 /*--------------------------------------------------------------------------------------------*/
-void metro1_proba_set(uint8_t val) {
+void metro1_proba_set(uint8_t val)
+{
 	proba1 = val / MIDI_MAX;
 }
 
 /*-------------------------------------------------------*/
-void metro2_proba_set(uint8_t val) {
+void metro2_proba_set(uint8_t val)
+{
 	proba2 = val / MIDI_MAX;
 }
 
 /*-------------------------------------------------------*/
-void metro3_proba_set(uint8_t val) {
+void metro3_proba_set(uint8_t val)
+{
 	proba3 = val / MIDI_MAX;
 }
 
 /*--------------------------------------------------------------------------------------------*/
-void metro_reset_rq(uint8_t val) {
-	if (val == MIDI_MAXi) {
+void metro_reset_rq(uint8_t val)
+{
+	if (val == MIDI_MAXi)
+	{
 		metro_reset_requested = true;
 	}
 }
@@ -937,10 +1040,12 @@ void metro_reset_rq(uint8_t val) {
 
 void MagicFX(uint8_t val) /* random effects parameters */
 {
-	if (val == MIDI_MAXi) {
+	if (val == MIDI_MAXi)
+	{
 		//Delay_switch(MIDI_MAXi);
 		delayON = rand() % 2;
-		if (delayON) {
+		if (delayON)
+		{
 			Delay_time_set(MIDIrandVal());
 			DelayWet_set(MIDIrandVal());
 			DelayFeedback_set(MIDIrandVal());
@@ -948,7 +1053,8 @@ void MagicFX(uint8_t val) /* random effects parameters */
 
 		//Chorus_switch(MIDI_MAXi);
 		chorusON = rand() % 2;
-		if (chorusON) {
+		if (chorusON)
+		{
 			ChorusRate_set(MIDIrandVal());
 			ChorusSecondRate_set(MIDIrandVal());
 			ChorusDelay_set(MIDIrandVal());
@@ -960,7 +1066,8 @@ void MagicFX(uint8_t val) /* random effects parameters */
 
 		//Phaser_switch(MIDI_MAXi);
 		phaserON = rand() % 2;
-		if (phaserON) {
+		if (phaserON)
+		{
 			Phaser_Rate_set(MIDIrandVal());
 			Phaser_Feedback_set(MIDIrandVal());
 			Phaser_Wet_set(MIDIrandVal());
@@ -971,7 +1078,8 @@ void MagicFX(uint8_t val) /* random effects parameters */
 /*-----------------------------------------------------------------------------*/
 void MagicPatch(uint8_t val) /* Create a new sound with random sound parameters */
 {
-	if (val == MIDI_MAXi) {
+	if (val == MIDI_MAXi)
+	{
 		seq_tempo_set(MIDIrandVal());
 		seq_freqMax_set(MIDIrandVal());
 		seq_scale_set(MIDIrandVal());
@@ -982,7 +1090,8 @@ void MagicPatch(uint8_t val) /* Create a new sound with random sound parameters 
 		Sound_set(MIDIrandVal());
 		uint8_t snd = soundNumber_get();
 
-		if (snd == FM2) {
+		if (snd == FM2)
+		{
 			FM_OP1_freq_set(MIDIrandVal());
 			FM_OP1_modInd_set(MIDIrandVal());
 			FM_OP2_freq_set(MIDIrandVal());
@@ -991,12 +1100,16 @@ void MagicPatch(uint8_t val) /* Create a new sound with random sound parameters 
 			FM_OP3_modInd_set(MIDIrandVal());
 			FM_OP4_freq_set(MIDIrandVal());
 			FM_OP4_modInd_set(MIDIrandVal());
-		} else if (snd == DRIFTERS) {
+		}
+		else if (snd == DRIFTERS)
+		{
 			DriftOsc1_amp_set(MIDIrandVal());
 			DriftOsc1_minFreq_set(MIDIrandVal());
 			DriftOsc1_maxFreq_set(MIDIrandVal());
 			DriftOsc1_centralFreq_set(MIDIrandVal());
-		} else if (snd == ADDITIVE) {
+		}
+		else if (snd == ADDITIVE)
+		{
 			AddOsc_gen_newWaveform(&addosc);
 		}
 
@@ -1032,8 +1145,10 @@ void MagicPatch(uint8_t val) /* Create a new sound with random sound parameters 
 
 /***************************************** Sequencer functions ***************************************************/
 
-void Sequencer_toggle(uint8_t val) { // run or stop sequencer
-	if (val == MIDI_MAXi) {
+void Sequencer_toggle(uint8_t val)
+{ // run or stop sequencer
+	if (val == MIDI_MAXi)
+	{
 		g_sequencerIsOn = !g_sequencerIsOn;
 		if (!g_sequencerIsOn)
 			ADSR_keyOff(&adsr);
@@ -1043,14 +1158,16 @@ void Sequencer_toggle(uint8_t val) { // run or stop sequencer
 
 /*------------------------------------------------------------------------------------------------------*/
 void _ITCMRAM_ sequencer_newStep_action(void) // User callback function called by sequencer_process()
-		{
-	if ((noteGen.automaticON || noteGen.chRequested)) {
+{
+	if ((noteGen.automaticON || noteGen.chRequested))
+	{
 		seq_sequence_new();
 		AddOsc_gen_newWaveform(&addosc);
 		noteGen.chRequested = false;
 	}
 
-	if (seq.chgTempoRequested) {
+	if (seq.chgTempoRequested)
+	{
 		float ratio = (float) (seq.gateTime) / seq.steptime;
 		; // keep gate time ratio
 		seq_steptime_update(&seq);
@@ -1064,19 +1181,20 @@ void _ITCMRAM_ sequencer_newStep_action(void) // User callback function called b
 	else
 		ADSR_keyOn(&adsr);
 
-	if (autoFilterON) {
-		SVF_directSetFilterValue(&SVFilter1,
-				600.f / SAMPLERATE * powf(5000.f / 600.f, frand_a_b(0, 1)));
-		SVF_directSetFilterValue(&SVFilter2,
-				600.f / SAMPLERATE * powf(5000.f / 600.f, frand_a_b(0, 1)));
+	if (autoFilterON)
+	{
+		SVF_directSetFilterValue(&SVFilter1, 600.f / SAMPLERATE * powf(5000.f / 600.f, frand_a_b(0, 1)));
+		SVF_directSetFilterValue(&SVFilter2, 600.f / SAMPLERATE * powf(5000.f / 600.f, frand_a_b(0, 1)));
 	}
 
-	if (noteGen.transpose != 0) {
+	if (noteGen.transpose != 0)
+	{
 		noteGen.rootNote += noteGen.transpose;
 		seq_transpose();
 	}
 
-	if (autoSound == 1) {
+	if (autoSound == 1)
+	{
 		switch (rand() % 4)
 		// 4 random timbers
 		{
@@ -1095,7 +1213,8 @@ void _ITCMRAM_ sequencer_newStep_action(void) // User callback function called b
 			break;
 		}
 	}
-	if (autoSound == 2) {
+	if (autoSound == 2)
+	{
 		sound = rand() % LAST_SOUND;
 		if ((sound == CHORD13min5) || (sound == CHORD135)) // avoided sounds
 			sound = VOICES3;
@@ -1109,22 +1228,25 @@ void _ITCMRAM_ sequencer_newStep_action(void) // User callback function called b
 
 /*---------------------------------------------------------------------------------------*/
 void sequencer_newSequence_action(void) // User callback function called by sequencer_process()
-		{
+{
 	/* A new sequence begins ... */
-	if ((demoModeON == true) && (freezeON == false)) {
+	if ((demoModeON == true) && (freezeON == false))
+	{
 		MagicPatch(MIDI_MAXi);
 		MagicFX(MIDI_MAXi);
 	}
 }
 
 /*==========================================================================================================================*/
-float _ITCMRAM_ waveCompute(uint8_t sound, float frq) {
+float _ITCMRAM_ waveCompute(uint8_t sound, float frq)
+{
 	float y;
 
 	OpSetFreq(&op1, frq);
 
 	/* choose waveform generator */
-	switch (sound) {
+	switch (sound)
+	{
 	case MORPH_SAW:
 		y = 0.8f * OpSampleCompute(&op1, MSAW);
 		break;
@@ -1171,18 +1293,14 @@ float _ITCMRAM_ waveCompute(uint8_t sound, float frq) {
 		// major chord : 1 3maj 5
 		OpSetFreq(&op2, frq * 1.26f);
 		OpSetFreq(&op3, frq * 1.5f);
-		y = 0.33f
-				* (OpSampleCompute(&op1, MSAW) + OpSampleCompute(&op2, MSAW)
-						+ OpSampleCompute(&op3, MSAW));
+		y = 0.33f * (OpSampleCompute(&op1, MSAW) + OpSampleCompute(&op2, MSAW) + OpSampleCompute(&op3, MSAW));
 		break;
 
 	case CHORD13min5:
 		// minor chord : 1 3min 5
 		OpSetFreq(&op2, frq * 1.1892f);
 		OpSetFreq(&op3, frq * 1.5f);
-		y = 0.33f
-				* (OpSampleCompute(&op1, MSAW) + OpSampleCompute(&op2, MSAW)
-						+ OpSampleCompute(&op3, MSAW));
+		y = 0.33f * (OpSampleCompute(&op1, MSAW) + OpSampleCompute(&op2, MSAW) + OpSampleCompute(&op3, MSAW));
 		break;
 
 	case VOICES3:
@@ -1190,9 +1308,7 @@ float _ITCMRAM_ waveCompute(uint8_t sound, float frq) {
 
 		OpSetFreq(&op2, frq * (1 + Drifter_nextSample(&d1)));
 		OpSetFreq(&op3, frq * (1 + Drifter_nextSample(&d2)));
-		y = 0.33f
-				* (OpSampleCompute(&op1, MSAW) + OpSampleCompute(&op2, MSAW)
-						+ OpSampleCompute(&op3, MSAW));
+		y = 0.33f * (OpSampleCompute(&op1, MSAW) + OpSampleCompute(&op2, MSAW) + OpSampleCompute(&op3, MSAW));
 		break;
 
 	case DRIFTERS:
@@ -1220,7 +1336,8 @@ void change_instru_cmd(void)
 		drummerON = false;
 		desynkatorON = false;
 		reverbON = true;
-	} else
+	}
+	else
 	{
 		drummerON = true;
 		desynkatorON = false;
@@ -1238,7 +1355,7 @@ void change_instru_cmd(void)
  *	 length : is the number of frames. A frame is a 4 bytes data = left 16 bits sample + right 16 bits sample
  */
 void _ITCMRAM_ make_sound(uint16_t *buf, uint16_t length) // To be used with the Sequencer
-		{
+{
 
 	uint16_t *outp;
 	float y, y1, y2, y3;
@@ -1250,9 +1367,11 @@ void _ITCMRAM_ make_sound(uint16_t *buf, uint16_t length) // To be used with the
 
 	outp = buf;
 
-	for (uint16_t frame = 0; frame < length; frame++) {
+	for (uint16_t frame = 0; frame < length; frame++)
+	{
 
-		if (drummerON) {
+		if (drummerON)
+		{
 			/*--------------------------------------- Drummer synth -----------------------------------------------------*/
 
 			if (reverbON)
@@ -1261,7 +1380,8 @@ void _ITCMRAM_ make_sound(uint16_t *buf, uint16_t length) // To be used with the
 				delayON = true;
 
 			float t = tick.Process();
-			if (t) {
+			if (t)
+			{
 
 				drumcnt++;
 				bd.SetAccent(random() / (float) RAND_MAX);
@@ -1285,21 +1405,19 @@ void _ITCMRAM_ make_sound(uint16_t *buf, uint16_t length) // To be used with the
 				hihat.SetTone(random() / (float) RAND_MAX);
 				hihat.SetNoisiness(random() / (float) RAND_MAX);
 			}
-			switch (drumcnt % 3) {
+			switch (drumcnt % 3)
+			{
 			case 0:
-				y = 0.4
-						* (bd.Process(t) + sd.Process(0) + hihat.Process(0));
-								//+ asd.Process(0) + hihat.Process(0));
+				y = 0.4 * (bd.Process(t) + sd.Process(0) + hihat.Process(0));
+				//+ asd.Process(0) + hihat.Process(0));
 				break;
 			case 1:
-				y = 0.4
-						* (bd.Process(0) + sd.Process(t) + hihat.Process(0));
-								//+ asd.Process(0) + hihat.Process(0));
+				y = 0.4 * (bd.Process(0) + sd.Process(t) + hihat.Process(0));
+				//+ asd.Process(0) + hihat.Process(0));
 				break;
 			case 2:
-				y = 0.4
-						* (bd.Process(0) + sd.Process(0) + hihat.Process(t));
-								//+ asd.Process(0) + hihat.Process(0));
+				y = 0.4 * (bd.Process(0) + sd.Process(0) + hihat.Process(t));
+				//+ asd.Process(0) + hihat.Process(0));
 				break;
 //			case 3:
 //				y = 0.2
@@ -1318,13 +1436,16 @@ void _ITCMRAM_ make_sound(uint16_t *buf, uint16_t length) // To be used with the
 //				break;
 			}
 
-		} else if (desynkatorON) {
+		}
+		else if (desynkatorON)
+		{
 			/*--------------------------------------- Desynkator synth -----------------------------------------------------*/
 			clock1 = metro_process(&metro1);
 			clock2 = metro_process(&metro2);
 			clock3 = metro_process(&metro3);
 
-			if (metro_reset_requested) {
+			if (metro_reset_requested)
+			{
 				metro_reset(&metro1);
 				metro_reset(&metro2);
 				metro_reset(&metro3);
@@ -1332,8 +1453,10 @@ void _ITCMRAM_ make_sound(uint16_t *buf, uint16_t length) // To be used with the
 				metro_reset_requested = false;
 			}
 			/*************************************************************/
-			if (clock1) {
-				if ((noteGen.automaticON || noteGen.chRequested)) {
+			if (clock1)
+			{
+				if ((noteGen.automaticON || noteGen.chRequested))
+				{
 					seq_sequence_new();
 					noteGen.chRequested = false;
 					AddOsc_gen_newWaveform(&addosc);
@@ -1344,20 +1467,19 @@ void _ITCMRAM_ make_sound(uint16_t *buf, uint16_t length) // To be used with the
 				else
 					ADSR_keyOn(&adsr);
 
-				if (autoFilterON) {
-					SVF_directSetFilterValue(&SVFilter1,
-							600.f / SAMPLERATE
-									* powf(5000.f / 600.f, frand_a_b(0, 1)));
-					SVF_directSetFilterValue(&SVFilter2,
-							600.f / SAMPLERATE
-									* powf(5000.f / 600.f, frand_a_b(0, 1)));
+				if (autoFilterON)
+				{
+					SVF_directSetFilterValue(&SVFilter1, 600.f / SAMPLERATE * powf(5000.f / 600.f, frand_a_b(0, 1)));
+					SVF_directSetFilterValue(&SVFilter2, 600.f / SAMPLERATE * powf(5000.f / 600.f, frand_a_b(0, 1)));
 				}
-				if (noteGen.transpose != 0) {
+				if (noteGen.transpose != 0)
+				{
 					noteGen.rootNote += noteGen.transpose;
 					seq_transpose();
 				}
 
-				if (autoSound == 1) {
+				if (autoSound == 1)
+				{
 					switch (rand() % 4)
 					// 4 random timbers
 					{
@@ -1376,7 +1498,8 @@ void _ITCMRAM_ make_sound(uint16_t *buf, uint16_t length) // To be used with the
 						break;
 					}
 				}
-				if (autoSound == 2) {
+				if (autoSound == 2)
+				{
 					sound = rand() % LAST_SOUND;
 					if ((sound == CHORD13min5) || (sound == CHORD135))
 						sound = VOICES3;
@@ -1388,7 +1511,8 @@ void _ITCMRAM_ make_sound(uint16_t *buf, uint16_t length) // To be used with the
 				vol1 = frand_a_b(0.4f, .8f); // slightly random volume for each note
 			}
 			/*******************************************************************************/
-			if (clock2) {
+			if (clock2)
+			{
 				if ((noteGen.someNotesMuted) && (!mayTrig(proba2)))
 					ADSR_keyOff(&adsr2);
 				else
@@ -1398,7 +1522,8 @@ void _ITCMRAM_ make_sound(uint16_t *buf, uint16_t length) // To be used with the
 
 			}
 			/******************************************************************************/
-			if (clock3) {
+			if (clock3)
+			{
 				if ((noteGen.someNotesMuted) && (!mayTrig(proba3)))
 					ADSR_keyOff(&adsr3);
 				else
@@ -1422,30 +1547,22 @@ void _ITCMRAM_ make_sound(uint16_t *buf, uint16_t length) // To be used with the
 
 			/*--- Apply envelop and tremolo ---*/
 
-			env1 = ADSR_computeSample(&adsr)
-					* (1 + OpSampleCompute(&amp_lfo, WTSIN));
+			env1 = ADSR_computeSample(&adsr) * (1 + OpSampleCompute(&amp_lfo, WTSIN));
 			y1 *= vol1 * env1; // apply volume and envelop
 
-			if (adsr.cnt_
-					>= (uint32_t) lrintf(
-							0.5f * SAMPLERATE / metro_getFreq(&metro1))) // 50% gate time
+			if (adsr.cnt_ >= (uint32_t) lrintf(0.5f * SAMPLERATE / metro_getFreq(&metro1))) // 50% gate time
 				ADSR_keyOff(&adsr);
 
-			env2 = ADSR_computeSample(&adsr2)
-					* (1 + OpSampleCompute(&amp_lfo2, WTSIN));
+			env2 = ADSR_computeSample(&adsr2) * (1 + OpSampleCompute(&amp_lfo2, WTSIN));
 			y2 *= vol2 * env2; // apply volume and envelop
 
-			if (adsr2.cnt_
-					>= (uint32_t) lrintf(
-							0.5f * SAMPLERATE / metro_getFreq(&metro2))) // 50% gate time
+			if (adsr2.cnt_ >= (uint32_t) lrintf(0.5f * SAMPLERATE / metro_getFreq(&metro2))) // 50% gate time
 				ADSR_keyOff(&adsr2);
 
 			env3 = ADSR_computeSample(&adsr3);
 			y3 *= vol3 * env3; // apply volume and envelop
 
-			if (adsr3.cnt_
-					>= (uint32_t) lrintf(
-							0.5f * SAMPLERATE / metro_getFreq(&metro3))) // 50% gate time
+			if (adsr3.cnt_ >= (uint32_t) lrintf(0.5f * SAMPLERATE / metro_getFreq(&metro3))) // 50% gate time
 				ADSR_keyOff(&adsr3);
 
 			/*--- Apply filter effect ---*/
@@ -1453,28 +1570,29 @@ void _ITCMRAM_ make_sound(uint16_t *buf, uint16_t length) // To be used with the
 			/* Update the filters cutoff frequencies */
 			if ((!autoFilterON) && (filt_lfo.amp != 0))
 				SVF_directSetFilterValue(&SVFilter1,
-						SVF_refFreq_get(&SVFilter1)
-								* (1 + OpSampleCompute7bis(&filt_lfo)));
+						SVF_refFreq_get(&SVFilter1) * (1 + OpSampleCompute7bis(&filt_lfo)));
 
 			if (filt2_lfo.amp != 0)
 				SVF_directSetFilterValue(&SVFilter2,
-						SVF_refFreq_get(&SVFilter2)
-								* (1 + OpSampleCompute7bis(&filt2_lfo)));
+						SVF_refFreq_get(&SVFilter2) * (1 + OpSampleCompute7bis(&filt2_lfo)));
 
-			y1 = 0.5f
-					* (SVF_calcSample(&SVFilter1, y1)
-							+ SVF_calcSample(&SVFilter2, y1)); // Two filters in parallel
+			y1 = 0.5f * (SVF_calcSample(&SVFilter1, y1) + SVF_calcSample(&SVFilter2, y1)); // Two filters in parallel
 
 			/*---  Mix 3 oscillators ----*/
 			y = 0.4f * (y1 + y2 + y3);
 
-		} else {
+		}
+		else
+		{
 			/*------------------------------------ Dekrispator synth --------------------------------------------------------*/
 
 			/*--- Sequencer actions and update ---*/
-			if (g_sequencerIsOn == true) {
+			if (g_sequencerIsOn == true)
+			{
 				sequencer_process(); //computes f0 and calls sequencer_newStep_action() and sequencer_newSequence_action()
-			} else {
+			}
+			else
+			{
 				f0 = notesFreq[currentNote];
 				vol = (float) velocity / 127.0f;
 			}
@@ -1485,11 +1603,11 @@ void _ITCMRAM_ make_sound(uint16_t *buf, uint16_t length) // To be used with the
 			y = waveCompute(sound, f1);
 
 			/*--- Apply envelop and tremolo ---*/
-			env = ADSR_computeSample(&adsr)
-					* (1 + OpSampleCompute(&amp_lfo, WTSIN));
+			env = ADSR_computeSample(&adsr) * (1 + OpSampleCompute(&amp_lfo, WTSIN));
 			y *= vol * env; // apply volume and envelop
 
-			if (g_sequencerIsOn == true) {
+			if (g_sequencerIsOn == true)
+			{
 				if (adsr.cnt_ >= (uint32_t) seq.gateTime)
 					ADSR_keyOff(&adsr);
 			}
@@ -1498,17 +1616,13 @@ void _ITCMRAM_ make_sound(uint16_t *buf, uint16_t length) // To be used with the
 			/* Update the filters cutoff frequencies */
 			if ((!autoFilterON) && (filt_lfo.amp != 0))
 				SVF_directSetFilterValue(&SVFilter1,
-						SVF_refFreq_get(&SVFilter1)
-								* (1 + OpSampleCompute7bis(&filt_lfo)));
+						SVF_refFreq_get(&SVFilter1) * (1 + OpSampleCompute7bis(&filt_lfo)));
 
 			if (filt2_lfo.amp != 0)
 				SVF_directSetFilterValue(&SVFilter2,
-						SVF_refFreq_get(&SVFilter2)
-								* (1 + OpSampleCompute7bis(&filt2_lfo)));
+						SVF_refFreq_get(&SVFilter2) * (1 + OpSampleCompute7bis(&filt2_lfo)));
 
-			y = 0.5f
-					* (SVF_calcSample(&SVFilter1, y)
-							+ SVF_calcSample(&SVFilter2, y)); // Two filters in parallel
+			y = 0.5f * (SVF_calcSample(&SVFilter1, y) + SVF_calcSample(&SVFilter2, y)); // Two filters in parallel
 
 		}
 
@@ -1525,14 +1639,18 @@ void _ITCMRAM_ make_sound(uint16_t *buf, uint16_t length) // To be used with the
 		/*--- Apply stereo chorus/flanger effect ---*/
 		if (chorusON)
 			stereoChorus_compute(&yL, &yR, y);
-		else {
+		else
+		{
 			yL = y;
 			yR = y;
 		}
 
-		if (reverbON) {
+		if (reverbON)
+		{
 			verb.Process(yL, yR, &zL, &zR);
-		} else {
+		}
+		else
+		{
 			zL = yL;
 			zR = yR;
 		}
