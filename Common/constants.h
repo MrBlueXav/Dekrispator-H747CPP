@@ -45,8 +45,8 @@ extern "C" {
 #define _DTCMRAM_				__attribute__((section(".DTCMRAM_section_bss")))
 #define _SDRAM_					__attribute__((section(".sdram_bss")))
 
-//#define _ITCMRAM_				__attribute__((section(".itcm_text")))
-#define	_ITCMRAM_
+#define _ITCMRAM_				__attribute__((section(".itcm_text")))
+//#define	_ITCMRAM_
 //#define _DTCMRAM_
 
 /******************************************************************************************************************/

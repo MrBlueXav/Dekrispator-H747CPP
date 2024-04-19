@@ -141,7 +141,7 @@ class HiHat
     /** Get the next sample
         \param trigger Hit the hihat with true. Defaults to false.
     */
-    float Process(bool trigger = false)
+    float _ITCMRAM_ Process(bool trigger = false)
     {
         const float envelope_decay
             = 1.0f - 0.003f * SemitonesToRatio(-decay_ * 84.0f);

@@ -1660,9 +1660,9 @@ void _ITCMRAM_ make_sound(uint16_t *buf, uint16_t length) // To be used with the
 			zR = yR;
 		}
 
-//		/*--- DC removing ---*/
-//		zL = dcblock.Process(zL);
-//		zR = dcblock.Process(zR);
+		/*--- DC removing ---*/
+		zL = dcblock.Process(zL);
+		zR = dcblock.Process(zR);
 
 		/*--- clipping ---*/
 		zL = (zL > 1.0f) ? 1.0f : zL; //clip too loud left samples

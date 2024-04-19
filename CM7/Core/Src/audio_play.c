@@ -48,8 +48,8 @@ typedef enum
 /* Private variables ---------------------------------------------------------*/
 //ALIGN_32BYTES(static volatile AUDIO_BufferTypeDef buffer_ctl);
 ALIGN_32BYTES(static uint8_t buff[AUDIO_BUFFER_SIZE]);// AUDIO_BUFFER_SIZE is defined in constants.h
-static volatile BUFFER_StateTypeDef state;
-static AUDIO_PLAYBACK_StateTypeDef audio_state;
+static volatile _DTCMRAM_ BUFFER_StateTypeDef state;
+static _DTCMRAM_ AUDIO_PLAYBACK_StateTypeDef audio_state;
 static bool sound = true;
 static volatile uint32_t uwVolume;
 static BSP_AUDIO_Init_t AudioPlayInit;
@@ -89,7 +89,7 @@ void AudioInit(void)
 }
 
 /*----------------------------------------------------------------------------------------------------*/
-uint8_t AUDIO_Process(void)
+uint8_t _ITCMRAM_ AUDIO_Process(void)
 {
 	AUDIO_ErrorTypeDef error_state = AUDIO_ERROR_NONE;
 
@@ -108,8 +108,7 @@ uint8_t AUDIO_Process(void)
 			state = BUFFER_OFFSET_NONE;
 
 			/* Clean Data Cache to update the content of the SRAM */
-			SCB_CleanDCache_by_Addr((uint32_t*) &buff[0],
-			AUDIO_BUFFER_SIZE / 2);
+			SCB_CleanDCache_by_Addr((uint32_t*) &buff[0], AUDIO_BUFFER_SIZE / 2);
 			cyc_count_print();
 		}
 
@@ -118,13 +117,11 @@ uint8_t AUDIO_Process(void)
 		{
 			cyc_count_reset();
 
-			make_sound((uint16_t*) &buff[AUDIO_BUFFER_SIZE / 2],
-			AUDIO_BUFFER_SIZE / 8);
+			make_sound((uint16_t*) &buff[AUDIO_BUFFER_SIZE / 2], AUDIO_BUFFER_SIZE / 8);
 			state = BUFFER_OFFSET_NONE;
 
 			/* Clean Data Cache to update the content of the SRAM */
-			SCB_CleanDCache_by_Addr((uint32_t*) &buff[AUDIO_BUFFER_SIZE / 2],
-			AUDIO_BUFFER_SIZE / 2);
+			SCB_CleanDCache_by_Addr((uint32_t*) &buff[AUDIO_BUFFER_SIZE / 2], AUDIO_BUFFER_SIZE / 2);
 			cyc_count_print();
 		}
 

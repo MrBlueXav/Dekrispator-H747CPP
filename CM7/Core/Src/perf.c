@@ -59,19 +59,19 @@ void EnableTiming(void) // Initialization
 }
 
 //****************************************************************************
-void cyc_count_reset(void) // put this before the function to measure
+void _ITCMRAM_ cyc_count_reset(void) // put this before the function to measure
 {
 	*M7_DWT_CYCCNT = 0; // reset the counter
 }
 
 //****************************************************************************
-uint32_t cyc_count_get(void)
+uint32_t _ITCMRAM_ cyc_count_get(void)
 {
 	return *M7_DWT_CYCCNT;
 }
 
 //****************************************************************************
-void cyc_count_print(void) // put this just after the function to measure
+void _ITCMRAM_ cyc_count_print(void) // put this just after the function to measure
 {
 	perf.sum += *M7_DWT_CYCCNT;
 	perf.count++;
@@ -90,7 +90,7 @@ void cyc_count_print(void) // put this just after the function to measure
 }
 
 //****************************************************************************
-void Delay(uint32_t cycles)
+void _ITCMRAM_ Delay(uint32_t cycles)
 {
 	uint32_t start = *M7_DWT_CYCCNT;
 

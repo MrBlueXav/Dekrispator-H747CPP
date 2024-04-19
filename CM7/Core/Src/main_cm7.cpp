@@ -18,14 +18,21 @@
 void SystemClock_Config(void);
 static void MPU_Config(void);
 
-float global_samplerate ;
+float global_samplerate;
 
 /*-------------------------------------------------------------------------------*/
 /**
  * @brief  The application entry point.
  * @retval int
  */
-int main(void) {
+int main(void)
+{
+
+	/* Load functions into ITCM RAM */
+	extern unsigned char itcm_text_start;
+	extern const unsigned char itcm_text_end;
+	extern const unsigned char itcm_data;
+	memcpy(&itcm_text_start, &itcm_data, (int) (&itcm_text_end - &itcm_text_start));
 
 	/* MPU Configuration--------------------------------------------------------*/
 	MPU_Config();
@@ -40,7 +47,8 @@ int main(void) {
 	int32_t timeout = 0xFFFF;
 	while ((__HAL_RCC_GET_FLAG(RCC_FLAG_D2CKRDY) != RESET) && (timeout-- > 0))
 		;
-	if (timeout < 0) {
+	if (timeout < 0)
+	{
 		Error_Handler();
 	}
 
@@ -64,9 +72,16 @@ int main(void) {
 	timeout = 0xFFFF;
 	while ((__HAL_RCC_GET_FLAG(RCC_FLAG_D2CKRDY) == RESET) && (timeout-- > 0))
 		;
-	if (timeout < 0) {
+	if (timeout < 0)
+	{
 		Error_Handler();
 	}
+
+	/* Initialize all configured peripherals */
+	MX_GPIO_Init();
+	BSP_LED_Init(LED_RED);
+	MX_RNG_Init();
+	EnableTiming(); // For performance measurements
 
 	/* CM4_SEV_IRQn interrupt configuration */
 	HAL_NVIC_SetPriority(CM4_SEV_IRQn, 10, 0);
@@ -75,17 +90,6 @@ int main(void) {
 	/*  OPENAMP initialization */
 	openamp_cm7_init();
 
-	/* Initialize all configured peripherals */
-	MX_GPIO_Init();
-	MX_RNG_Init();
-	EnableTiming(); // For performance measurements
-	BSP_LED_Init(LED_RED);
-
-	//HAL_Delay(2000);
-
-	//SDRAM_test();
-	//SDRAM_DMA_test();
-
 	if (BSP_SDRAM_Init(0) != BSP_ERROR_NONE)
 		Error_Handler();
 
@@ -93,7 +97,8 @@ int main(void) {
 	Synth_Init();
 	AudioInit();
 
-	while (1) {
+	while (1)
+	{
 		Process_messages(); 	// in openamp_interface.c
 		AUDIO_Process();	// in audio_play.c
 	}
@@ -103,9 +108,12 @@ int main(void) {
  * @brief System Clock Configuration
  * @retval None
  */
-void SystemClock_Config(void) {
-	RCC_OscInitTypeDef RCC_OscInitStruct = { 0 };
-	RCC_ClkInitTypeDef RCC_ClkInitStruct = { 0 };
+void SystemClock_Config(void)
+{
+	RCC_OscInitTypeDef RCC_OscInitStruct =
+	{ 0 };
+	RCC_ClkInitTypeDef RCC_ClkInitStruct =
+	{ 0 };
 
 	/** Supply configuration update enable
 	 */
@@ -115,14 +123,14 @@ void SystemClock_Config(void) {
 	 */
 	__HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE1);
 
-	while (!__HAL_PWR_GET_FLAG(PWR_FLAG_VOSRDY)) {
+	while (!__HAL_PWR_GET_FLAG(PWR_FLAG_VOSRDY))
+	{
 	}
 
 	/** Initializes the RCC Oscillators according to the specified parameters
 	 * in the RCC_OscInitTypeDef structure.
 	 */
-	RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI48
-			| RCC_OSCILLATORTYPE_HSI | RCC_OSCILLATORTYPE_LSI
+	RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI48 | RCC_OSCILLATORTYPE_HSI | RCC_OSCILLATORTYPE_LSI
 			| RCC_OSCILLATORTYPE_HSE;
 	RCC_OscInitStruct.HSEState = RCC_HSE_ON;
 	RCC_OscInitStruct.HSIState = RCC_HSI_DIV1;
@@ -139,15 +147,15 @@ void SystemClock_Config(void) {
 	RCC_OscInitStruct.PLL.PLLRGE = RCC_PLL1VCIRANGE_3;
 	RCC_OscInitStruct.PLL.PLLVCOSEL = RCC_PLL1VCOWIDE;
 	RCC_OscInitStruct.PLL.PLLFRACN = 0;
-	if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK) {
+	if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
+	{
 		Error_Handler();
 	}
 
 	/** Initializes the CPU, AHB and APB buses clocks
 	 */
-	RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK | RCC_CLOCKTYPE_SYSCLK
-			| RCC_CLOCKTYPE_PCLK1 | RCC_CLOCKTYPE_PCLK2 | RCC_CLOCKTYPE_D3PCLK1
-			| RCC_CLOCKTYPE_D1PCLK1;
+	RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK | RCC_CLOCKTYPE_SYSCLK | RCC_CLOCKTYPE_PCLK1 | RCC_CLOCKTYPE_PCLK2
+			| RCC_CLOCKTYPE_D3PCLK1 | RCC_CLOCKTYPE_D1PCLK1;
 	RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
 	RCC_ClkInitStruct.SYSCLKDivider = RCC_SYSCLK_DIV1;
 	RCC_ClkInitStruct.AHBCLKDivider = RCC_HCLK_DIV2;
@@ -156,7 +164,8 @@ void SystemClock_Config(void) {
 	RCC_ClkInitStruct.APB2CLKDivider = RCC_APB2_DIV2;
 	RCC_ClkInitStruct.APB4CLKDivider = RCC_APB4_DIV2;
 
-	if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_2) != HAL_OK) {
+	if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_2) != HAL_OK)
+	{
 		Error_Handler();
 	}
 	HAL_RCC_MCOConfig(RCC_MCO1, RCC_MCO1SOURCE_HSI, RCC_MCODIV_1);
@@ -168,8 +177,10 @@ void SystemClock_Config(void) {
 /*-----------------------------------------------------------------------------------------------------------------*/
 /* MPU Configuration */
 
-static void MPU_Config(void) {
-	MPU_Region_InitTypeDef MPU_InitStruct = { 0 };
+static void MPU_Config(void)
+{
+	MPU_Region_InitTypeDef MPU_InitStruct =
+	{ 0 };
 
 	/* Disables the MPU */
 	HAL_MPU_Disable();
@@ -224,12 +235,14 @@ static void MPU_Config(void) {
  * @brief  This function is executed in case of error occurrence.
  * @retval None
  */
-void Error_Handler(void) {
+void Error_Handler(void)
+{
 	/* USER CODE BEGIN Error_Handler_Debug */
 	/* User can add his own implementation to report the HAL error return state */
 	__disable_irq();
 	BSP_LED_On(LED_RED);
-	while (1) {
+	while (1)
+	{
 	}
 	/* USER CODE END Error_Handler_Debug */
 }

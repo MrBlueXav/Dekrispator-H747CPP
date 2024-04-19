@@ -31,7 +31,7 @@ void SyntheticSnareDrum::Init(float sample_rate)
     snare_lp_.Init(sample_rate_);
 }
 
-inline float SyntheticSnareDrum::DistortedSine(float phase)
+inline float _ITCMRAM_ SyntheticSnareDrum::DistortedSine(float phase)
 {
     float triangle = (phase < 0.5f ? phase : 1.0f - phase) * 4.0f - 1.3f;
     return 2.0f * triangle / (1.0f + fabsf(triangle));
@@ -39,7 +39,7 @@ inline float SyntheticSnareDrum::DistortedSine(float phase)
 
 bool even = true;
 
-float SyntheticSnareDrum::Process(bool trigger)
+float  SyntheticSnareDrum::Process(bool trigger)
 {
     const float decay_xt = decay_ * (1.0f + decay_ * (decay_ - 1.0f));
     const float drum_decay

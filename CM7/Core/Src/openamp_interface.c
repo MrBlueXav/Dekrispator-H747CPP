@@ -199,7 +199,7 @@ void load_patch_cmd(void)
 }
 
 /*-----------------------------------------------------------------------------------------------------------------*/
-void Process_messages(void) // called in main() loop (in main_cm7.c)
+void _ITCMRAM_ Process_messages(void) // called in main() loop (in main_cm7.c)
 {
 
 	if (patch_received == true)	/*---  msg from CM4 received ! ---*/

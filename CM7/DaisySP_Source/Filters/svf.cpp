@@ -28,7 +28,7 @@ void Svf::Init(float sample_rate)
     fc_max_    = sr_ / 3.f;
 }
 
-void Svf::Process(float in)
+void _ITCMRAM_ Svf::Process(float in)
 {
     input_ = in;
     // first pass

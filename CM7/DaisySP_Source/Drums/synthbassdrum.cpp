@@ -1,6 +1,7 @@
 #include "synthbassdrum.h"
 #include <math.h>
 #include <stdlib.h>
+#include "constants.h"
 
 using namespace daisysp;
 
@@ -69,7 +70,7 @@ void SyntheticBassDrum::Init(float sample_rate)
     noise_.Init();
 }
 
-inline float SyntheticBassDrum::DistortedSine(float phase,
+inline  float SyntheticBassDrum::DistortedSine(float phase,
                                               float phase_noise,
                                               float dirtiness)
 {
@@ -86,13 +87,13 @@ inline float SyntheticBassDrum::DistortedSine(float phase,
     return sine + (1.0f - dirtiness) * (clean_sine - sine);
 }
 
-inline float SyntheticBassDrum::TransistorVCA(float s, float gain)
+inline  float SyntheticBassDrum::TransistorVCA(float s, float gain)
 {
     s = (s - 0.6f) * gain;
     return 3.0f * s / (2.0f + fabsf(s)) + gain * 0.3f;
 }
 
-float SyntheticBassDrum::Process(bool trigger)
+float  SyntheticBassDrum::Process(bool trigger)
 {
     float dirtiness = dirtiness_;
     dirtiness *= fmax(1.0f - 8.0f * new_f0_, 0.0f);

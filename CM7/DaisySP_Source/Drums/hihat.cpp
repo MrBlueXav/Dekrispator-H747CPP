@@ -12,7 +12,7 @@ void SquareNoise::Init(float sample_rate)
     }
 }
 
-float SquareNoise::Process(float f0)
+float _ITCMRAM_ SquareNoise::Process(float f0)
 {
     const float ratios[6] = {// Nominal f0: 414 Hz
                              1.0f,
@@ -65,7 +65,7 @@ void RingModNoise::Init(float sample_rate)
     }
 }
 
-float RingModNoise::Process(float f0)
+float _ITCMRAM_ RingModNoise::Process(float f0)
 {
     const float ratio = f0 / (0.01f + f0);
     const float f1a   = 200.0f / sample_rate_ * ratio;
@@ -82,7 +82,7 @@ float RingModNoise::Process(float f0)
     return out;
 }
 
-float RingModNoise::ProcessPair(Oscillator* osc, float f1, float f2)
+float _ITCMRAM_ RingModNoise::ProcessPair(Oscillator* osc, float f1, float f2)
 {
     osc[0].SetWaveform(Oscillator::WAVE_SQUARE);
     osc[0].SetFreq(f1 * sample_rate_);

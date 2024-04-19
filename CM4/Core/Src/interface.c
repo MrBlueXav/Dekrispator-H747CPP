@@ -413,7 +413,9 @@ void Application_Process(void) // called in main() loop (main_cm4.c)
 			UTIL_LCD_DisplayStringAt(201, 297, (uint8_t*) blank_message, LEFT_MODE); // Erase message window
 			strg = binn_object_str(messageBuffer, "string");
 			UTIL_LCD_DisplayStringAt(201, 297, (uint8_t*) strg, LEFT_MODE);
+			printf("\n");
 			printf(strg);
+			printf("\n");
 			free(strg);
 			break;
 

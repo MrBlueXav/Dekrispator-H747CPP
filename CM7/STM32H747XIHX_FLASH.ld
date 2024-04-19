@@ -24,23 +24,26 @@
 ENTRY(Reset_Handler)
 
 /* Highest address of the user mode stack */
-/*  _estack = 0x20020000;   /* end of DTCMRAM */
-    _estack = 0x24080000;	/* end of AXI SRAM
+/*  _estack = 0x20020000;   /* end of DTCMRAM --> doesn't work ! */
+  _estack = 0x24080000;	/* end of AXI SRAM */
+  _estack_real = 0x20001000;	/* stack is placed in the first 4KB of DTCMRAM --> doesn't work !  */
+
 /* Generate a link error if heap and stack don't fit into RAM */
 _Min_Heap_Size = 0x1000;      /* required amount of heap  */
-_Min_Stack_Size = 0x1000; /* required amount of stack */
+_Min_Stack_Size = 0x200; /* required amount of stack */
 
 /* Specify the memory areas */
 MEMORY
 {
 	FLASH (rx)	    		: ORIGIN = 0x08000000, LENGTH = 1024K
-	DTCMRAM (rw)   	   		: ORIGIN = 0x20000000, LENGTH = 128K 
+	/* DTCMRAM (rw)   	   		: ORIGIN = 0x20000000, LENGTH = 128K /*  */
+	DTCMRAM (rw)   	   		: ORIGIN = 0x20001000, LENGTH = 124K /*   */
 	RAM (xrw)   	   		: ORIGIN = 0x24000000, LENGTH = 512K /* AXI SRAM */
 	ITCMRAM (xrw)      		: ORIGIN = 0x00000000, LENGTH = 64K
 	OPENAMP_RSC_TAB (xrw) 	: ORIGIN = 0x38000000, LENGTH = 1K	/* in SRAM4 */
 	OPEN_AMP_SHMEM (xrw) 	: ORIGIN = 0x38000400, LENGTH = 47K /* in SRAM4, was 63K */
 	SHARED_RAM	(rw)		: ORIGIN = 0x3800C000, LENGTH = 16K	/* in SRAM4 */
-	SDRAM       (RWX) 		: ORIGIN = 0xD0400000, LENGTH = 28M /* Because first 4MB of SDRAM are used for LCD ! */
+	SDRAM       (RW) 		: ORIGIN = 0xD0400000, LENGTH = 28M /* Because first 4MB of SDRAM are used for LCD ! */
 }
  __OPENAMP_region_start__  = ORIGIN(OPEN_AMP_SHMEM);
  __OPENAMP_region_end__ = ORIGIN(OPEN_AMP_SHMEM) + LENGTH(OPEN_AMP_SHMEM);
@@ -189,10 +192,24 @@ SECTIONS
 	*(.sdram_bss*)
 	. = ALIGN(4);
 	_esdram_bss = .;
-
 	PROVIDE(__sdram_bss_end = _esdram_bss);
+	
 } > SDRAM
-  
+
+/*----------------------------------------------*/
+/* Copy specific fast-executing code to ITCM RAM */
+itcm_data = LOADADDR(.itcm_text);
+.itcm_text :
+{
+	. = ALIGN(4);
+	itcm_text_start = .;
+	*(.itcm_text)
+	*(.itcm_text*)
+	. = ALIGN(4);
+	itcm_text_end = .;
+	
+} >ITCMRAM AT> FLASH   
+
 /*----------------------------------------------*/
   /* Remove information from the standard libraries */
   /DISCARD/ :
