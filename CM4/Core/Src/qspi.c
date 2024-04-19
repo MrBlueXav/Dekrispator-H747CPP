@@ -80,7 +80,7 @@ void QSPI_ReInit(void)
 	}
 	else
 	{
-		printf("QSPI Disable Memory Mapped Mode : OK\n     ");
+		printf("QSPI Disable Memory Mapped Mode : OK\n");
 	}
 	BSP_QSPI_DeInit(0);
 	QSPI_init();

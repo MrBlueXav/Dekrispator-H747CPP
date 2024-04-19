@@ -30,6 +30,11 @@
 #define MAX_PATCH_SIZE				1024 /* also defined in constants.h */
 #define PATCH_MEMORY_START_ADDRESS	0x0
 
+enum MenuPage
+{
+	BOTTOM, VOL_PG, INST_PG, LOAD_PG, SAVE_PG, TOP,
+};
+
 /*------------------------------------------------------------------------------------------------------------------*/
 extern ApplicationTypeDef Appli_state;
 extern USBH_HandleTypeDef hUsbHostHS;
@@ -58,12 +63,15 @@ static SynthPatch_t *patch;
 static char *strg;
 static uint8_t messageBuffer[1024];
 static volatile bool SEV_received;
+
 static volatile uint32_t JoyPinPressed = 0;
 static volatile uint32_t Joy_State;
 static volatile bool joyOn;
 static volatile bool pushbuttonON;
 
-/* message buffers variables in SRAM4 */
+static uint8_t menu_page;
+
+/* message buffers pointers in SRAM4 */
 volatile uint8_t *buf_cm4_to_cm7 = (void*) BUFF_CM4_TO_CM7_ADDR;
 volatile uint8_t *buf_cm7_to_cm4 = (void*) BUFF_CM7_TO_CM4_ADDR;
 volatile ScreenDatas_t *scr_datas = (void*) BUFF2_CM7_TO_CM4_ADDR;
@@ -99,6 +107,7 @@ void openamp_init(void)
 	Joy_State = JOY_NONE;
 	joyOn = false;
 	pushbuttonON = false;
+	menu_page = VOL_PG;
 
 }
 /*----------------------------------------------------------------------------------------------------------------*/
@@ -252,6 +261,237 @@ void BSP_JOY_Callback(JOY_TypeDef JOY, uint32_t JoyPin)
 }
 
 /*------------------------------------------------------------------------------------------------*/
+void LCD_DisplayMenuPage(const uint8_t *page_p)
+{
+	UTIL_LCD_DisplayStringAt(201, 297, (uint8_t*) blank_message, LEFT_MODE); // Erase message window
+
+	switch (*page_p)
+	{
+	case VOL_PG:
+		UTIL_LCD_DisplayStringAt(201, 297, (uint8_t*) "VOLUME page !", LEFT_MODE);
+		break;
+
+	case INST_PG:
+		UTIL_LCD_DisplayStringAt(201, 297, (uint8_t*) "INSTRUMENT page !", LEFT_MODE);
+		break;
+
+	case LOAD_PG:
+		UTIL_LCD_DisplayStringAt(201, 297, (uint8_t*) "LOAD PATCH page !", LEFT_MODE);
+		break;
+
+	case SAVE_PG:
+		UTIL_LCD_DisplayStringAt(201, 297, (uint8_t*) "SAVE PATCH page !", LEFT_MODE);
+		break;
+
+	default:
+		break;
+	}
+
+}
+/*------------------------------------------------------------------------------------------------*/
+void volume_page_action(uint8_t *page_p, uint32_t joy)
+{
+	midi_package_t packet;
+
+	switch (joy)
+	{
+	case JOY_LEFT:
+		*page_p = INST_PG;
+		printf("Menu : Instru\n");
+		LCD_DisplayMenuPage(page_p);
+		break;
+
+	case JOY_RIGHT:
+		*page_p = LOAD_PG;
+		printf("Menu : LOAD\n");
+		LCD_DisplayMenuPage(page_p);
+		break;
+
+	case JOY_UP:
+		printf("Augmenter volume\n");
+		packet.ALL = VOL_INC_CMD;
+		midipacket_sendToCM7(packet);
+		break;
+
+	case JOY_DOWN:
+		printf("Baisser volume\n");
+		packet.ALL = VOL_DEC_CMD;
+		midipacket_sendToCM7(packet);
+		break;
+
+	case JOY_SEL:
+
+		break;
+
+	default:
+		break;
+
+	}
+}
+
+/*------------------------------------------------------------------------------------------------*/
+void instru_page_action(uint8_t *page_p, uint32_t joy)
+{
+	midi_package_t packet;
+
+	switch (joy)
+	{
+	case JOY_LEFT:
+		*page_p = SAVE_PG;
+		printf("Menu : SAVE\n");
+		LCD_DisplayMenuPage(page_p);
+		break;
+
+	case JOY_RIGHT:
+		*page_p = VOL_PG;
+		printf("Menu : VOL\n");
+		LCD_DisplayMenuPage(page_p);
+		break;
+
+	case JOY_UP:
+		printf("Instru suivant\n");
+		packet.ALL = CHG_INSTR_CMD;
+		midipacket_sendToCM7(packet);
+		break;
+
+	case JOY_DOWN:
+		printf("Instru precedent\n");
+		break;
+
+	case JOY_SEL:
+
+		break;
+
+	default:
+		break;
+
+	}
+}
+
+/*------------------------------------------------------------------------------------------------*/
+void load_page_action(uint8_t *page_p, uint32_t joy)
+{
+
+	midi_package_t packet;
+
+	switch (joy)
+	{
+	case JOY_LEFT:
+		*page_p = VOL_PG;
+		printf("Menu : VOL\n");
+		LCD_DisplayMenuPage(page_p);
+		break;
+
+	case JOY_RIGHT:
+		*page_p = SAVE_PG;
+		printf("Menu : SAVE\n");
+		LCD_DisplayMenuPage(page_p);
+		break;
+
+	case JOY_UP:
+		printf("Memoire suivante\n");
+		packet.ALL = 0x7F4BB00B;
+		midipacket_sendToCM7(packet);
+		break;
+
+	case JOY_DOWN:
+		printf("Memoire precedente\n");
+		packet.ALL = 0x7F4AB00B;
+		midipacket_sendToCM7(packet);
+		break;
+
+	case JOY_SEL:
+		printf("Load patch.\n");
+		packet.ALL = 0x7F54B00B;
+		midipacket_sendToCM7(packet);
+		break;
+
+	default:
+		break;
+
+	}
+}
+
+/*------------------------------------------------------------------------------------------------*/
+void save_page_action(uint8_t *page_p, uint32_t joy)
+{
+
+	midi_package_t packet;
+
+	switch (joy)
+	{
+	case JOY_LEFT:
+		*page_p = LOAD_PG;
+		printf("Menu : LOAD\n");
+		LCD_DisplayMenuPage(page_p);
+		break;
+
+	case JOY_RIGHT:
+		*page_p = INST_PG;
+		printf("Menu : Instru\n");
+		LCD_DisplayMenuPage(page_p);
+		break;
+
+	case JOY_UP:
+		printf("Memoire suivante\n");
+		packet.ALL = 0x7F4BB00B;
+		midipacket_sendToCM7(packet);
+		break;
+
+	case JOY_DOWN:
+		printf("Memoire precedente\n");
+		packet.ALL = 0x7F4AB00B;
+		midipacket_sendToCM7(packet);
+		break;
+
+	case JOY_SEL:
+		printf("Save patch.\n");
+		packet.ALL = 0x7F53B00B;
+		midipacket_sendToCM7(packet);
+		break;
+
+	default:
+		break;
+
+	}
+}
+
+/*------------------------------------------------------------------------------------------------*/
+void buttonAction(uint8_t *page_p)
+{
+	midi_package_t pack;
+
+	printf("Button pushed !\n");
+	pack.ALL = TOG_FREEZE_CMD;
+	midipacket_sendToCM7(pack);
+}
+
+/*------------------------------------------------------------------------------------------------*/
+void joystickAction(uint8_t *page_p, uint32_t joy)
+{
+	switch (*page_p)
+	{
+	case VOL_PG:
+		volume_page_action(page_p, joy);
+		break;
+
+	case INST_PG:
+		instru_page_action(page_p, joy);
+		break;
+
+	case LOAD_PG:
+		load_page_action(page_p, joy);
+		break;
+
+	case SAVE_PG:
+		save_page_action(page_p, joy);
+		break;
+
+	default:
+		break;
+	}
+}
+/*------------------------------------------------------------------------------------------------*/
 void Application_Process(void) // called in main() loop (main_cm4.c)
 {
 	midi_package_t pack;
@@ -267,55 +507,16 @@ void Application_Process(void) // called in main() loop (main_cm4.c)
 	/*------- read wake-up button ---------------*/
 	if (pushbuttonON)
 	{
-		printf("Button pushed !\n");
-		pack.ALL = TOG_FREEZE_CMD;
-		midipacket_sendToCM7(pack);
+		buttonAction(&menu_page);
 		pushbuttonON = false; // Button action done
 	}
 
 	/*------- read joystick ---------------*/
 	if (joyOn) /* if joystick is pressed and not released */
 	{
-		switch (JoyPinPressed)
-		{
-		case 0x01U:
-			Joy_State = JOY_SEL;
-			printf("JOY_SEL \n");
-			break;
-
-		case 0x02U:
-			Joy_State = JOY_DOWN;
-			printf("JOY_DOWN \n");
-			pack.ALL = VOL_DEC_CMD;
-			midipacket_sendToCM7(pack);
-			break;
-
-		case 0x04U:
-			Joy_State = JOY_LEFT;
-			printf("JOY_LEFT \n");
-			break;
-
-		case 0x08U:
-			Joy_State = JOY_RIGHT;
-			printf("JOY_RIGHT \n");
-			pack.ALL = CHG_INSTR_CMD;
-			midipacket_sendToCM7(pack);
-			break;
-
-		case 0x10U:
-			Joy_State = JOY_UP;
-			printf("JOY_UP \n");
-			pack.ALL = VOL_INC_CMD;
-			midipacket_sendToCM7(pack);
-			break;
-
-		default:
-			Joy_State = JOY_NONE;
-			break;
-		}
+		joystickAction(&menu_page, JoyPinPressed);
+		JoyPinPressed = 0; /*  joystick action done */
 	}
-
-	JoyPinPressed = 0; /*  joystick action done */
 
 	/* Check for CM7 messages (openAMP) */
 	if (message_received == 0)
@@ -556,6 +757,7 @@ void midipacket_print(midi_package_t pack) //cf. Teensy-MIDI-monitor
 		printf("Control Change, ch= %d", channel);
 		printf(", control= %d", data1);
 		printf(", value= %d", data2);
+		printf(", Packet = 0x%08lX", pack.ALL);
 		printf("\n");
 		break;
 

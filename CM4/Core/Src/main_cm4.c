@@ -5,7 +5,6 @@
  * @brief          : Main program body for CM4
  * @date			: april 2024
  ******************************************************************************
-
  */
 
 /* Includes ------------------------------------------------------------------*/
@@ -126,7 +125,7 @@ void Welcome_message(void)
 	}
 	else
 	{
-		printf("QSPI Memory Mapped Mode : OK\n     ");
+		printf("QSPI Memory Mapped Mode : OK\n");
 		BSP_LCD_DrawBitmap(0, 0, 0, (uint8_t*) BACKGRND_ADDR); /* Display main screen on LCD */
 	}
 
