@@ -123,17 +123,17 @@ void refresh_screen_infos(volatile ScreenDatas_t *datas)
 {
 	UTIL_LCD_SetFont(&Font12);
 
-	if (datas->desynkatorON_par)
+	if (datas->instrument_par == Desynkator)
 		UTIL_LCD_DisplayStringAt(123, 203, (uint8_t*) "x", LEFT_MODE);
 	else
 		UTIL_LCD_DisplayStringAt(123, 203, (uint8_t*) " ", LEFT_MODE);
 
-	if (datas->dekrispatorON_par)
+	if (datas->instrument_par == Dekrispator)
 		UTIL_LCD_DisplayStringAt(123, 167, (uint8_t*) "x", LEFT_MODE);
 	else
 		UTIL_LCD_DisplayStringAt(123, 167, (uint8_t*) " ", LEFT_MODE);
 
-	if (datas->synthOn_par)
+	if (datas->instrument_par == Drumzator)
 		UTIL_LCD_DisplayStringAt(123, 238, (uint8_t*) "x", LEFT_MODE);
 	else
 		UTIL_LCD_DisplayStringAt(123, 238, (uint8_t*) " ", LEFT_MODE);
@@ -175,17 +175,21 @@ void refresh_screen_infos(volatile ScreenDatas_t *datas)
 	else
 		UTIL_LCD_DisplayStringAt(346, 428, (uint8_t*) " ", LEFT_MODE);
 
+	/* Tempo */
 	sprintf(string_message, "%3u", (uint16_t) roundf(datas->tempo_par));
 	UTIL_LCD_DisplayStringAt(113, 428, (uint8_t*) string_message, LEFT_MODE);
 
+	/* Sequence length */
 	sprintf(string_message, "%2u", datas->seq_length_par);
 	UTIL_LCD_DisplayStringAt(191, 428, (uint8_t*) string_message, LEFT_MODE);
 
+	/* Sound */
 	sprintf(string_message, "%2u", datas->sound_par);
 	UTIL_LCD_DisplayStringAt(600, 428, (uint8_t*) string_message, LEFT_MODE);
 
+	/* Memory number / patch location */
 	sprintf(string_message, "%2u", 1 + datas->memory_loc_par);
-	UTIL_LCD_DisplayStringAt(704, 428, (uint8_t*) string_message, LEFT_MODE);
+	UTIL_LCD_DisplayStringAt(732, 428, (uint8_t*) string_message, LEFT_MODE);
 
 }
 /*----------------------------------------------------------------------------------------------------------------*/
@@ -286,8 +290,8 @@ void LCD_DisplayMenuPage(const uint8_t *page_p)
 	default:
 		break;
 	}
-
 }
+
 /*------------------------------------------------------------------------------------------------*/
 void volume_page_action(uint8_t *page_p, uint32_t joy)
 {
@@ -390,19 +394,19 @@ void load_page_action(uint8_t *page_p, uint32_t joy)
 
 	case JOY_UP:
 		printf("Memoire suivante\n");
-		packet.ALL = 0x7F4BB00B;
+		packet.ALL = NEXT_LOC_CMD;
 		midipacket_sendToCM7(packet);
 		break;
 
 	case JOY_DOWN:
 		printf("Memoire precedente\n");
-		packet.ALL = 0x7F4AB00B;
+		packet.ALL = PREV_LOC_CMD;
 		midipacket_sendToCM7(packet);
 		break;
 
 	case JOY_SEL:
 		printf("Load patch.\n");
-		packet.ALL = 0x7F54B00B;
+		packet.ALL = LOAD_CMD;
 		midipacket_sendToCM7(packet);
 		break;
 
@@ -434,19 +438,19 @@ void save_page_action(uint8_t *page_p, uint32_t joy)
 
 	case JOY_UP:
 		printf("Memoire suivante\n");
-		packet.ALL = 0x7F4BB00B;
+		packet.ALL = NEXT_LOC_CMD;
 		midipacket_sendToCM7(packet);
 		break;
 
 	case JOY_DOWN:
 		printf("Memoire precedente\n");
-		packet.ALL = 0x7F4AB00B;
+		packet.ALL = PREV_LOC_CMD;
 		midipacket_sendToCM7(packet);
 		break;
 
 	case JOY_SEL:
 		printf("Save patch.\n");
-		packet.ALL = 0x7F53B00B;
+		packet.ALL = SAVE_CMD;
 		midipacket_sendToCM7(packet);
 		break;
 
@@ -560,7 +564,7 @@ void Application_Process(void) // called in main() loop (main_cm4.c)
 			loc = binn_object_uint16(messageBuffer, "location");
 			printf("Current patch location : %u\n", loc + 1);
 			sprintf(string_message, "%2u", loc + 1);
-			UTIL_LCD_DisplayStringAt(704, 428, (uint8_t*) string_message, LEFT_MODE);
+			UTIL_LCD_DisplayStringAt(732, 428, (uint8_t*) string_message, LEFT_MODE);
 			break;
 
 		case 'P': /* save patch */
@@ -631,7 +635,7 @@ void Application_Process(void) // called in main() loop (main_cm4.c)
 			//UTIL_LCD_DisplayStringAt(20, 220, (uint8_t*) string_message, LEFT_MODE);
 
 			sprintf(string_message, "%2lu%%", occupation_cm7);
-			UTIL_LCD_DisplayStringAt(702, 60, (uint8_t*) string_message, LEFT_MODE);
+			UTIL_LCD_DisplayStringAt(728, 60, (uint8_t*) string_message, LEFT_MODE);
 			break;
 
 		case 'C':

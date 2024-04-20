@@ -23,7 +23,7 @@ static volatile bool SEV_received;
 static volatile bool patch_received;
 static volatile uint32_t _DTCMRAM_ ticktime, oldticktime;
 
-/* message buffers variables in SRAM4 ----------------------------------------*/
+/* message buffers variables in shared SRAM4 aka SHARED_RAM in linker file ---*/
 volatile uint8_t *buf_cm4_to_cm7 = (void*) BUFF_CM4_TO_CM7_ADDR;
 volatile uint8_t *buf_cm7_to_cm4 = (void*) BUFF_CM7_TO_CM4_ADDR;
 volatile ScreenDatas_t *scr_datas = (void*) BUFF2_CM7_TO_CM4_ADDR;

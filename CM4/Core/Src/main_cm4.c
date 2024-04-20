@@ -85,10 +85,10 @@ int main(void)
 	HAL_NVIC_EnableIRQ(CM7_SEV_IRQn);
 
 	printf("\n");
-	printf("-----------------------------------------\n");
-	printf("****    This is Dekrispator H747 !   ****\n");
+	printf("--------------------------------------------\n");
+	printf("****    This is Dekrispator H747CPP !   ****\n");
 	printf("Waiting for USB MIDI controller device...\n");
-	printf("-----------------------------------------\n");
+	printf("--------------------------------------------\n");
 	printf("\n");
 
 	while (1)

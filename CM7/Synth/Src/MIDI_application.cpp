@@ -27,7 +27,7 @@ void Do_____nothing(uint8_t val)
 } /* for ControlFunctionsTable[] */
 
 /*------------------------------MIDI CC implementation----------------------------------------*/
-
+/* Verify, when modified, if a MIDI code has to be changed in constants.h !!!  */
 void (*const ControlChangeFunctionsTable[128])(uint8_t val) =
 {	Do_____nothing, /* 0 */
 	VibratoAmp_set, /* 1    	"Modulation Wheel" 	*/
@@ -253,25 +253,24 @@ void ProcessReceivedMidiDatas(midi_package_t pack)
 
 	/*------------------------------------------------------------------------------------------*/
 
-	if ((pack.evnt0 & 0xF0) == 0xB0) /* If incoming midi message is a Control Change... */
+	/* If incoming midi message is a Control Change... */
+	if ((pack.evnt0 & 0xF0) == 0xB0)
 	{
 		ControlChangeFunctionsTable[pack.evnt1](pack.evnt2);
-
 	}
+
+	/* Joystick, button and M4 commands :  */
 	else if (pack.ALL == VOL_INC_CMD)
 	{
 		incVol();
-
 	}
 	else if (pack.ALL == VOL_DEC_CMD)
 	{
 		decVol();
-
 	}
 	else if (pack.ALL == LOAD_PATCH_CMD)
 	{
 		load_patch_cmd();
-
 	}
 	else if (pack.ALL == CHG_INSTR_CMD)
 	{

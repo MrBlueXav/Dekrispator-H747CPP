@@ -43,6 +43,8 @@ extern int8_t velocity;
 /*--------------------------------------------------------------*/
 bool g_sequencerIsOn _DTCMRAM_;
 
+static uint8_t instrument _DTCMRAM_;
+
 static SyntheticBassDrum bd _DTCMRAM_;
 static SyntheticSnareDrum sd _DTCMRAM_;
 static AnalogBassDrum abd _DTCMRAM_;
@@ -120,6 +122,7 @@ void Synth_patch_save(SynthPatch_t *patch);
 
 void Synth_Init(void)
 {
+	instrument = Dekrispator;
 
 	g_sequencerIsOn = true;
 	demoModeON = true;
@@ -212,6 +215,8 @@ void Synth_Init(void)
 /*--------------------------------------------------------------------------*/
 void get_datas_for_screen(volatile ScreenDatas_t *datas)
 {
+	datas->instrument_par = instrument;
+
 	datas->desynkatorON_par = desynkatorON && !demoModeON;
 	datas->dekrispatorON_par = demoModeON && !desynkatorON; // demoModeOn
 	datas->synthOn_par = !desynkatorON && !demoModeON;
@@ -236,6 +241,8 @@ void get_datas_for_screen(volatile ScreenDatas_t *datas)
 /*--------------------------------------------------------------------------*/
 void Synth_patch_save(SynthPatch_t *patch) // save current synth settings in *patch structure.
 {
+	patch->instrument_par = instrument;
+
 	patch->desynkatorON_par = desynkatorON;
 	patch->autoFilterON_par = autoFilterON;
 	patch->delayON_par = delayON;
@@ -296,6 +303,8 @@ void Synth_patch_load(const SynthPatch_t *patch) // Load "patch" settings to syn
 {
 	g_sequencerIsOn = true;
 	demoModeON = false;
+
+	instrument = patch->instrument_par;
 
 	desynkatorON = patch->desynkatorON_par;
 	autoFilterON = patch->autoFilterON_par;
@@ -534,6 +543,7 @@ void DemoMode_toggle(uint8_t val)
 		demoModeON = true;
 		desynkatorON = false;
 		freezeON = false;
+		instrument = Dekrispator;
 	}
 
 }
@@ -545,6 +555,7 @@ void Desynkator_toggle(uint8_t val)
 	{
 		desynkatorON = true;
 		demoModeON = false;
+		instrument = Desynkator;
 
 	}
 }
@@ -576,6 +587,7 @@ void Synth_reset(uint8_t val)
 		Synth_Init();
 		demoModeON = false;
 		desynkatorON = false;
+		instrument = Dekrispator;
 	}
 }
 
@@ -1334,96 +1346,278 @@ float _ITCMRAM_ waveCompute(uint8_t sound, float frq)
 	return y;
 }
 
+/*------------------------------------------------------------------------------------------------------*/
 void change_instru_cmd(void)
 {
-	if (drummerON)
+	if (instrument <= top_instr - 2)
+		instrument++;
+	else
+		instrument = bottom_instr + 1;
+
+//	if (drummerON)
+//	{
+//		drummerON = false;
+//		desynkatorON = false;
+//		reverbON = true;
+//	}
+//	else
+//	{
+//		drummerON = true;
+//		desynkatorON = false;
+//		reverbON = false;
+//		delayON = true;
+//		Delay_init();
+//		phaserON = false;
+//		chorusON = false;
+//	}
+}
+
+/*------------------------------------ Dekrispator synth --------------------------------------------------------*/
+float dekrispator()
+{
+	float y, f1, env;
+
+	/*--- Sequencer actions and update ---*/
+	if (g_sequencerIsOn == true)
 	{
-		drummerON = false;
-		desynkatorON = false;
-		reverbON = true;
+		sequencer_process(); //computes f0 and calls sequencer_newStep_action() and sequencer_newSequence_action()
 	}
 	else
 	{
-		drummerON = true;
-		desynkatorON = false;
-		reverbON = false;
-		delayON = true;
-		Delay_init();
-		phaserON = false;
-		chorusON = false;
+		f0 = notesFreq[currentNote];
+		vol = (float) velocity / 127.0f;
 	}
-}
-/*==========================================================================================================================*/
-/*
- *	 Main sound generator function
- *	 buf : pointer to the audio buffer to be filled
- *	 length : is the number of frames. A frame is a 4 bytes data = left 16 bits sample + right 16 bits sample
- */
-void _ITCMRAM_ make_sound(uint16_t *buf, uint16_t length) // To be used with the Sequencer
-{
+	/*--- compute vibrato modulation ---*/
+	f1 = f0 * (1 + OpSampleCompute(&vibr_lfo, WTSIN));
 
-	uint16_t *outp;
+	/*--- Generate waveform ---*/
+	y = waveCompute(sound, f1);
+
+	/*--- Apply envelop and tremolo ---*/
+	env = ADSR_computeSample(&adsr) * (1 + OpSampleCompute(&amp_lfo, WTSIN));
+	y *= vol * env; // apply volume and envelop
+
+	if (g_sequencerIsOn == true)
+	{
+		if (adsr.cnt_ >= (uint32_t) seq.gateTime)
+			ADSR_keyOff(&adsr);
+	}
+
+	/*--- Apply filter effect ---*/
+	/* Update the filters cutoff frequencies */
+	if ((!autoFilterON) && (filt_lfo.amp != 0))
+		SVF_directSetFilterValue(&SVFilter1, SVF_refFreq_get(&SVFilter1) * (1 + OpSampleCompute7bis(&filt_lfo)));
+
+	if (filt2_lfo.amp != 0)
+		SVF_directSetFilterValue(&SVFilter2, SVF_refFreq_get(&SVFilter2) * (1 + OpSampleCompute7bis(&filt2_lfo)));
+
+	y = 0.5f * (SVF_calcSample(&SVFilter1, y) + SVF_calcSample(&SVFilter2, y)); // Two filters in parallel
+
+	return y;
+
+}
+
+/*--------------------------------------- Desynkator synth -----------------------------------------------------*/
+float desynkator()
+{
 	float y, y1, y2, y3;
-	float yL, yR, zL, zR;
 	float f1;
-	float env, env1, env2, env3;
-	//uint16_t valueL, valueR;
+	float env1, env2, env3;
 	uint8_t clock1, clock2, clock3;
 
-	outp = buf;
+	clock1 = metro_process(&metro1);
+	clock2 = metro_process(&metro2);
+	clock3 = metro_process(&metro3);
 
-	for (uint16_t frame = 0; frame < length; frame++)
+	if (metro_reset_requested)
 	{
-
-		if (drummerON)
+		metro_reset(&metro1);
+		metro_reset(&metro2);
+		metro_reset(&metro3);
+		clock1 = clock2 = clock3 = 1;
+		metro_reset_requested = false;
+	}
+	/*************************************************************/
+	if (clock1)
+	{
+		if ((noteGen.automaticON || noteGen.chRequested))
 		{
-			/*--------------------------------------- Drummer synth -----------------------------------------------------*/
+			seq_sequence_new();
+			noteGen.chRequested = false;
+			AddOsc_gen_newWaveform(&addosc);
+		}
 
-			if (reverbON)
-				reverbON = false;
-			if (!delayON)
-				delayON = true;
+		if ((noteGen.someNotesMuted) && (!mayTrig(proba1)))
+			ADSR_keyOff(&adsr);
+		else
+			ADSR_keyOn(&adsr);
 
-			float t = tick.Process();
-			if (t)
-			{
+		if (autoFilterON)
+		{
+			SVF_directSetFilterValue(&SVFilter1, 600.f / SAMPLERATE * powf(5000.f / 600.f, frand_a_b(0, 1)));
+			SVF_directSetFilterValue(&SVFilter2, 600.f / SAMPLERATE * powf(5000.f / 600.f, frand_a_b(0, 1)));
+		}
+		if (noteGen.transpose != 0)
+		{
+			noteGen.rootNote += noteGen.transpose;
+			seq_transpose();
+		}
 
-				drumcnt++;
-				bd.SetAccent(random() / (float) RAND_MAX);
-				bd.SetDirtiness(random() / (float) RAND_MAX);
-				bd.SetDecay(random() / (float) RAND_MAX);
-
-				sd.SetAccent(random() / (float) RAND_MAX);
-				sd.SetDecay(random() / (float) RAND_MAX);
-				sd.SetSnappy(random() / (float) RAND_MAX);
-
-				abd.SetTone(.7f * random() / (float) RAND_MAX);
-				abd.SetDecay(random() / (float) RAND_MAX);
-				abd.SetSelfFmAmount(random() / (float) RAND_MAX);
-
-				asd.SetDecay(random() / (float) RAND_MAX);
-				asd.SetSnappy(random() / (float) RAND_MAX);
-				asd.SetTone(.8f * random() / (float) RAND_MAX);
-
-				hihat.SetDecay(random() / (float) RAND_MAX);
-				hihat.SetSustain((random() / (float) RAND_MAX) > .8f);
-				hihat.SetTone(random() / (float) RAND_MAX);
-				hihat.SetNoisiness(random() / (float) RAND_MAX);
-			}
-			switch (drumcnt % 3)
+		if (autoSound == 1)
+		{
+			switch (rand() % 4)
+			// 4 random timbers
 			{
 			case 0:
-				y = 0.4 * (bd.Process(t) + sd.Process(0) + hihat.Process(0));
-				//+ asd.Process(0) + hihat.Process(0));
+				sound = CHORD15;
 				break;
 			case 1:
-				y = 0.4 * (bd.Process(0) + sd.Process(t) + hihat.Process(0));
-				//+ asd.Process(0) + hihat.Process(0));
+				AddOsc_gen_newWaveform(&addosc);
+				sound = ADDITIVE;
 				break;
 			case 2:
-				y = 0.4 * (bd.Process(0) + sd.Process(0) + hihat.Process(t));
-				//+ asd.Process(0) + hihat.Process(0));
+				sound = CHORD13min5;
 				break;
+			case 3:
+				sound = VOICES3;
+				break;
+			}
+		}
+		if (autoSound == 2)
+		{
+			sound = rand() % LAST_SOUND;
+			if ((sound == CHORD13min5) || (sound == CHORD135))
+				sound = VOICES3;
+			if (sound == ADDITIVE)
+				AddOsc_gen_newWaveform(&addosc);
+		}
+
+		f01 = midiNoteToFreq((uint8_t) seq_random_note());
+		vol1 = frand_a_b(0.4f, .8f); // slightly random volume for each note
+	}
+	/*******************************************************************************/
+	if (clock2)
+	{
+		if ((noteGen.someNotesMuted) && (!mayTrig(proba2)))
+			ADSR_keyOff(&adsr2);
+		else
+			ADSR_keyOn(&adsr2);
+		f02 = midiNoteToFreq((uint8_t) seq_random_note());
+		vol2 = frand_a_b(0.4f, .8f); // slightly random volume for each note
+
+	}
+	/******************************************************************************/
+	if (clock3)
+	{
+		if ((noteGen.someNotesMuted) && (!mayTrig(proba3)))
+			ADSR_keyOff(&adsr3);
+		else
+			ADSR_keyOn(&adsr3);
+		f03 = midiNoteToFreq((uint8_t) seq_random_note());
+		vol3 = frand_a_b(0.4f, .8f); // slightly random volume for each note
+
+	}
+
+	/*--- compute vibrato modulation ---*/
+
+	f1 = f01 * (1 + OpSampleCompute(&vibr_lfo, WTSIN));
+	OpSetFreq(&oscill2, f02);
+	mbRectOsc2.freq = f03;
+
+	/*--- Generate waveforms ---*/
+
+	y1 = waveCompute(sound, f1);
+	y2 = OpSampleCompute(&oscill2, MSAW);
+	y3 = BlepOsc_sampleCompute(&mbRectOsc2);
+
+	/*--- Apply envelop and tremolo ---*/
+
+	env1 = ADSR_computeSample(&adsr) * (1 + OpSampleCompute(&amp_lfo, WTSIN));
+	y1 *= vol1 * env1; // apply volume and envelop
+
+	if (adsr.cnt_ >= (uint32_t) lrintf(0.5f * SAMPLERATE / metro_getFreq(&metro1))) // 50% gate time
+		ADSR_keyOff(&adsr);
+
+	env2 = ADSR_computeSample(&adsr2) * (1 + OpSampleCompute(&amp_lfo2, WTSIN));
+	y2 *= vol2 * env2; // apply volume and envelop
+
+	if (adsr2.cnt_ >= (uint32_t) lrintf(0.5f * SAMPLERATE / metro_getFreq(&metro2))) // 50% gate time
+		ADSR_keyOff(&adsr2);
+
+	env3 = ADSR_computeSample(&adsr3);
+	y3 *= vol3 * env3; // apply volume and envelop
+
+	if (adsr3.cnt_ >= (uint32_t) lrintf(0.5f * SAMPLERATE / metro_getFreq(&metro3))) // 50% gate time
+		ADSR_keyOff(&adsr3);
+
+	/*--- Apply filter effect ---*/
+
+	/* Update the filters cutoff frequencies */
+	if ((!autoFilterON) && (filt_lfo.amp != 0))
+		SVF_directSetFilterValue(&SVFilter1, SVF_refFreq_get(&SVFilter1) * (1 + OpSampleCompute7bis(&filt_lfo)));
+
+	if (filt2_lfo.amp != 0)
+		SVF_directSetFilterValue(&SVFilter2, SVF_refFreq_get(&SVFilter2) * (1 + OpSampleCompute7bis(&filt2_lfo)));
+
+	y1 = 0.5f * (SVF_calcSample(&SVFilter1, y1) + SVF_calcSample(&SVFilter2, y1)); // Two filters in parallel
+
+	/*---  Mix 3 oscillators ----*/
+	y = 0.4f * (y1 + y2 + y3);
+
+	return y;
+
+}
+
+/*--------------------------------------- Drumzator synth -----------------------------------------------------*/
+float drumzator()
+{
+	float y;
+
+	if (reverbON)
+		reverbON = false;
+	if (!delayON)
+		delayON = true;
+
+	float t = tick.Process();
+	if (t)
+	{
+
+		drumcnt++;
+		bd.SetAccent(random() / (float) RAND_MAX);
+		bd.SetDirtiness(random() / (float) RAND_MAX);
+		bd.SetDecay(random() / (float) RAND_MAX);
+
+		sd.SetAccent(random() / (float) RAND_MAX);
+		sd.SetDecay(random() / (float) RAND_MAX);
+		sd.SetSnappy(random() / (float) RAND_MAX);
+
+		abd.SetTone(.7f * random() / (float) RAND_MAX);
+		abd.SetDecay(random() / (float) RAND_MAX);
+		abd.SetSelfFmAmount(random() / (float) RAND_MAX);
+
+		asd.SetDecay(random() / (float) RAND_MAX);
+		asd.SetSnappy(random() / (float) RAND_MAX);
+		asd.SetTone(.8f * random() / (float) RAND_MAX);
+
+		hihat.SetDecay(random() / (float) RAND_MAX);
+		hihat.SetSustain((random() / (float) RAND_MAX) > .8f);
+		hihat.SetTone(random() / (float) RAND_MAX);
+		hihat.SetNoisiness(random() / (float) RAND_MAX);
+	}
+	switch (drumcnt % 3)
+	{
+	case 0:
+		y = 0.4 * (bd.Process(t) + sd.Process(0) + hihat.Process(0));
+		//+ asd.Process(0) + hihat.Process(0));
+		break;
+	case 1:
+		y = 0.4 * (bd.Process(0) + sd.Process(t) + hihat.Process(0));
+		//+ asd.Process(0) + hihat.Process(0));
+		break;
+	case 2:
+		y = 0.4 * (bd.Process(0) + sd.Process(0) + hihat.Process(t));
+		//+ asd.Process(0) + hihat.Process(0));
+		break;
 //			case 3:
 //				y = 0.2
 //						* (bd.Process(0) + sd.Process(0) + abd.Process(0)
@@ -1439,198 +1633,43 @@ void _ITCMRAM_ make_sound(uint16_t *buf, uint16_t length) // To be used with the
 //						* (bd.Process(0) + sd.Process(0) + abd.Process(0)
 //								+ asd.Process(0) + hihat.Process(t));
 //				break;
-			}
+	}
+	return y;
+}
+/*==========================================================================================================================*/
+/*
+ *	 Main sound generator function
+ *	 buf : pointer to the audio buffer to be filled
+ *	 length : is the number of frames. A frame is a 4 bytes data = left 16 bits sample + right 16 bits sample
+ */
+void _ITCMRAM_ make_sound(uint16_t *buf, uint16_t length) // To be used with the Sequencer
+{
 
-		}
-		else if (desynkatorON)
+	uint16_t *outp;
+	float y, yL, yR, zL, zR;
+
+	outp = buf;
+
+	for (uint16_t frame = 0; frame < length; frame++)
+	{
+		switch (instrument)
 		{
-			/*--------------------------------------- Desynkator synth -----------------------------------------------------*/
-			clock1 = metro_process(&metro1);
-			clock2 = metro_process(&metro2);
-			clock3 = metro_process(&metro3);
+		case Dekrispator:
+			y = dekrispator();
+			break;
 
-			if (metro_reset_requested)
-			{
-				metro_reset(&metro1);
-				metro_reset(&metro2);
-				metro_reset(&metro3);
-				clock1 = clock2 = clock3 = 1;
-				metro_reset_requested = false;
-			}
-			/*************************************************************/
-			if (clock1)
-			{
-				if ((noteGen.automaticON || noteGen.chRequested))
-				{
-					seq_sequence_new();
-					noteGen.chRequested = false;
-					AddOsc_gen_newWaveform(&addosc);
-				}
+		case Desynkator:
+			y = desynkator();
+			break;
 
-				if ((noteGen.someNotesMuted) && (!mayTrig(proba1)))
-					ADSR_keyOff(&adsr);
-				else
-					ADSR_keyOn(&adsr);
+		case Drumzator:
+			y = drumzator();
+			break;
 
-				if (autoFilterON)
-				{
-					SVF_directSetFilterValue(&SVFilter1, 600.f / SAMPLERATE * powf(5000.f / 600.f, frand_a_b(0, 1)));
-					SVF_directSetFilterValue(&SVFilter2, 600.f / SAMPLERATE * powf(5000.f / 600.f, frand_a_b(0, 1)));
-				}
-				if (noteGen.transpose != 0)
-				{
-					noteGen.rootNote += noteGen.transpose;
-					seq_transpose();
-				}
-
-				if (autoSound == 1)
-				{
-					switch (rand() % 4)
-					// 4 random timbers
-					{
-					case 0:
-						sound = CHORD15;
-						break;
-					case 1:
-						AddOsc_gen_newWaveform(&addosc);
-						sound = ADDITIVE;
-						break;
-					case 2:
-						sound = CHORD13min5;
-						break;
-					case 3:
-						sound = VOICES3;
-						break;
-					}
-				}
-				if (autoSound == 2)
-				{
-					sound = rand() % LAST_SOUND;
-					if ((sound == CHORD13min5) || (sound == CHORD135))
-						sound = VOICES3;
-					if (sound == ADDITIVE)
-						AddOsc_gen_newWaveform(&addosc);
-				}
-
-				f01 = midiNoteToFreq((uint8_t) seq_random_note());
-				vol1 = frand_a_b(0.4f, .8f); // slightly random volume for each note
-			}
-			/*******************************************************************************/
-			if (clock2)
-			{
-				if ((noteGen.someNotesMuted) && (!mayTrig(proba2)))
-					ADSR_keyOff(&adsr2);
-				else
-					ADSR_keyOn(&adsr2);
-				f02 = midiNoteToFreq((uint8_t) seq_random_note());
-				vol2 = frand_a_b(0.4f, .8f); // slightly random volume for each note
-
-			}
-			/******************************************************************************/
-			if (clock3)
-			{
-				if ((noteGen.someNotesMuted) && (!mayTrig(proba3)))
-					ADSR_keyOff(&adsr3);
-				else
-					ADSR_keyOn(&adsr3);
-				f03 = midiNoteToFreq((uint8_t) seq_random_note());
-				vol3 = frand_a_b(0.4f, .8f); // slightly random volume for each note
-
-			}
-
-			/*--- compute vibrato modulation ---*/
-
-			f1 = f01 * (1 + OpSampleCompute(&vibr_lfo, WTSIN));
-			OpSetFreq(&oscill2, f02);
-			mbRectOsc2.freq = f03;
-
-			/*--- Generate waveform ---*/
-
-			y1 = waveCompute(sound, f1);
-			y2 = OpSampleCompute(&oscill2, MSAW);
-			y3 = BlepOsc_sampleCompute(&mbRectOsc2);
-
-			/*--- Apply envelop and tremolo ---*/
-
-			env1 = ADSR_computeSample(&adsr) * (1 + OpSampleCompute(&amp_lfo, WTSIN));
-			y1 *= vol1 * env1; // apply volume and envelop
-
-			if (adsr.cnt_ >= (uint32_t) lrintf(0.5f * SAMPLERATE / metro_getFreq(&metro1))) // 50% gate time
-				ADSR_keyOff(&adsr);
-
-			env2 = ADSR_computeSample(&adsr2) * (1 + OpSampleCompute(&amp_lfo2, WTSIN));
-			y2 *= vol2 * env2; // apply volume and envelop
-
-			if (adsr2.cnt_ >= (uint32_t) lrintf(0.5f * SAMPLERATE / metro_getFreq(&metro2))) // 50% gate time
-				ADSR_keyOff(&adsr2);
-
-			env3 = ADSR_computeSample(&adsr3);
-			y3 *= vol3 * env3; // apply volume and envelop
-
-			if (adsr3.cnt_ >= (uint32_t) lrintf(0.5f * SAMPLERATE / metro_getFreq(&metro3))) // 50% gate time
-				ADSR_keyOff(&adsr3);
-
-			/*--- Apply filter effect ---*/
-
-			/* Update the filters cutoff frequencies */
-			if ((!autoFilterON) && (filt_lfo.amp != 0))
-				SVF_directSetFilterValue(&SVFilter1,
-						SVF_refFreq_get(&SVFilter1) * (1 + OpSampleCompute7bis(&filt_lfo)));
-
-			if (filt2_lfo.amp != 0)
-				SVF_directSetFilterValue(&SVFilter2,
-						SVF_refFreq_get(&SVFilter2) * (1 + OpSampleCompute7bis(&filt2_lfo)));
-
-			y1 = 0.5f * (SVF_calcSample(&SVFilter1, y1) + SVF_calcSample(&SVFilter2, y1)); // Two filters in parallel
-
-			/*---  Mix 3 oscillators ----*/
-			y = 0.4f * (y1 + y2 + y3);
-
+		default:
+			y = 0.0f;
+			break;
 		}
-		else
-		{
-			/*------------------------------------ Dekrispator synth --------------------------------------------------------*/
-
-			/*--- Sequencer actions and update ---*/
-			if (g_sequencerIsOn == true)
-			{
-				sequencer_process(); //computes f0 and calls sequencer_newStep_action() and sequencer_newSequence_action()
-			}
-			else
-			{
-				f0 = notesFreq[currentNote];
-				vol = (float) velocity / 127.0f;
-			}
-			/*--- compute vibrato modulation ---*/
-			f1 = f0 * (1 + OpSampleCompute(&vibr_lfo, WTSIN));
-
-			/*--- Generate waveform ---*/
-			y = waveCompute(sound, f1);
-
-			/*--- Apply envelop and tremolo ---*/
-			env = ADSR_computeSample(&adsr) * (1 + OpSampleCompute(&amp_lfo, WTSIN));
-			y *= vol * env; // apply volume and envelop
-
-			if (g_sequencerIsOn == true)
-			{
-				if (adsr.cnt_ >= (uint32_t) seq.gateTime)
-					ADSR_keyOff(&adsr);
-			}
-
-			/*--- Apply filter effect ---*/
-			/* Update the filters cutoff frequencies */
-			if ((!autoFilterON) && (filt_lfo.amp != 0))
-				SVF_directSetFilterValue(&SVFilter1,
-						SVF_refFreq_get(&SVFilter1) * (1 + OpSampleCompute7bis(&filt_lfo)));
-
-			if (filt2_lfo.amp != 0)
-				SVF_directSetFilterValue(&SVFilter2,
-						SVF_refFreq_get(&SVFilter2) * (1 + OpSampleCompute7bis(&filt2_lfo)));
-
-			y = 0.5f * (SVF_calcSample(&SVFilter1, y) + SVF_calcSample(&SVFilter2, y)); // Two filters in parallel
-
-		}
-
 		/*------------------------------------------ Common effects ------------------------------------------------------------*/
 
 		/*---  Apply delay effect ----*/
@@ -1675,21 +1714,6 @@ void _ITCMRAM_ make_sound(uint16_t *buf, uint16_t length) // To be used with the
 		*outp++ = (uint16_t) (lrintf(32767.0f * zL)); // left channel sample
 		*outp++ = (uint16_t) (lrintf(32767.0f * zR)); // right channel sample
 
-//		/*--- clipping ---*/
-//		yL = (yL > 1.0f) ? 1.0f : yL; //clip too loud left samples
-//		yL = (yL < -1.0f) ? -1.0f : yL;
-//
-//		yR = (yR > 1.0f) ? 1.0f : yR; //clip too loud right samples
-//		yR = (yR < -1.0f) ? -1.0f : yR;
-//
-//		verb.Process(0.1 * yL, 0.1 * yR, &zL, &zR);
-//
-//		/****** let's hear the new sample *******/
-//		valueL = (uint16_t) ((int16_t) ((32767.0f) * 10 * zL)); // conversion float -> int16 !!!???
-//		valueR = (uint16_t) ((int16_t) ((32767.0f) * 10 * zR));
-//
-//		*outp++ = valueL; // left channel sample
-//		*outp++ = valueR; // right channel sample
 	}
 }
 

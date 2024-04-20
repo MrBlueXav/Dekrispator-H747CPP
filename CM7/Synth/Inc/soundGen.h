@@ -51,27 +51,17 @@
 #include "metronome.h"
 #include "rational_ratios.h"
 
-/*------------------------------------------------------------------------------*/
-//typedef enum
-//{
-//	MORPH_SAW = 0,
-//	WT_SINE,
-//	ADDITIVE,
-//	POWER_SINE,
-//	BLEPTRIANGLE,
-//	BLEPSQUARE,
-//	BLEPSAW,
-//	VOICES3,
-//	CHORD15,
-//	FM2,
-//	DRIFTERS,
-//	CHORD135,
-//	CHORD13min5,
-//	NOISE,
-//	LAST_SOUND
-//
-//} Timbre_t;
+ /*--------------------------------------------------------------*/
+ enum Instruments
+ {
+ 	bottom_instr,
+	Dekrispator,
+	Desynkator,
+	Drumzator,
+	top_instr,
+ };
 
+/*------------------------------------------------------------------------------*/
 enum
 {
 	MORPH_SAW = 0,
@@ -149,6 +139,8 @@ typedef struct /* Maximum patch size is currently 1024 bytes ! */
 	DelayParams_t delay_par;
 	ChorusParams_t chorus_par;
 
+	uint8_t instrument_par;
+
 } SynthPatch_t;
 
 /*------------------------------------------------------------------------------*/
@@ -164,6 +156,7 @@ typedef struct
 /*------------------------------------------------------------------------------*/
 typedef struct
 {
+	uint8_t instrument_par;
 	bool desynkatorON_par;
 	bool dekrispatorON_par; // demoModeOn
 	bool synthOn_par;

@@ -35,11 +35,19 @@ extern "C" {
 #define BACKGRND_ADDR			((uint32_t *)0x97E80000) /* address in QSPI Flash for background image  : 0x90000000 + 128MB - 1.5MB */
 
 /***************************************** Special MIDI messages from CM4 for CM7 ************************************************************/
-#define VOL_INC_CMD				0x01010000
-#define VOL_DEC_CMD				0x01020000
-#define LOAD_PATCH_CMD			0x01030000
-#define CHG_INSTR_CMD			0x01040000
-#define TOG_FREEZE_CMD			0x01050000
+/*****  !!! Little endian encoding !!!    ******/
+/* Special user packets */
+#define VOL_INC_CMD				0x00000101
+#define VOL_DEC_CMD				0x00000201
+#define LOAD_PATCH_CMD			0x00000301
+#define CHG_INSTR_CMD			0x00000401
+#define TOG_FREEZE_CMD			0x00000501
+
+/* True MIDI CC packet, must be same as in MIDI_application.c ! : */
+#define NEXT_LOC_CMD			0x7F4BB00B
+#define PREV_LOC_CMD			0x7F4AB00B
+#define LOAD_CMD				0x7F54B00B
+#define SAVE_CMD				0x7F53B00B
 
 /*****************************************************************************************************************/
 #define _DTCMRAM_				__attribute__((section(".DTCMRAM_section_bss")))
@@ -57,7 +65,7 @@ extern "C" {
 /* Align X to 4 bytes */
 #define MEM_ALIGN(x)			(((x) + 0x00000003) & ~(0x00000003))
 
-/* Shared RAM between 2 cores is SRAM4 in D3 domain */
+/* Shared RAM between 2 cores is SRAM4 in D3 domain aka SHARED_RAM in linker file */
 #define SHD_RAM_START_ADDR                  0x3800C000 /* last 16K of SRAM4 */
 #define SHD_RAM_LEN                         0x00003FFF /* 16K */
 
