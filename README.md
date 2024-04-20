@@ -13,7 +13,7 @@ There are two additional instruments :
 
 * **Desynkator** which is like three metronomic sound generators synchronized in rational ratios tempi with adjustable probabilities. It shares the same controls and FX as Dekrispator.  
 * **Drumzator** which is a very simple demo of DaisySP percussion modules.  
-CC78 and joystick/right enables toggling between the instruments.  
+CC78 and joystick enables toggling between the instruments.  
 
 It's an expensive board but I had the opportunity to get one for free but with a damaged LCD, so I could work on a version which would clearly separate USB and audio with the two embedded cores.  
 Of course, at that cost (about 100€), maybe a raspberry Pi would be a better option (less hassle with hardware configuration) but it's another universe !
@@ -32,7 +32,7 @@ DaisySP library from Electrosmith is now included.
 # Technical features :
 
 * Very basic LCD use at the moment, no touch-screen. 
-* Joystick up/down controls volume.   
+* Joystick allows access to different menus (volume, instrument, load patch, save patch) and send some actions.   
 * "wake-up" button freezes/unfreezes evolution of sounds.
 * LED information :
 	* The red LED lights on when a system error occurs.  
@@ -41,11 +41,11 @@ DaisySP library from Electrosmith is now included.
 
 * Patch memory in QSPI Flash (save/load/erase all) : 32 locations currently.
 * M4 core (at 200 MHz) manages MIDI USB Host function (stable with my old Korg NanoKontrol !), sends debug infos on UART and LCD, manages patch memory and sends MIDI messages to control M7 core. Use CN1 to connect your midi device.
-* M7 core (at 400 MHz) computes sound.      
-* No RTOS
+* M7 core (at 400 MHz) computes sound, sends/receives datas to/from M4.      
+* No RTOS, just super loops.
 * Samplerate is 48kHz and audio samples are 16 bits large.      
 * CPU load is displayed (CM7 only).
-* Each core communicates through *openAMP* infrastructure and shared memory, small messages are serialized with *Binn* library (probably overkill).    
+* Each core communicates through *openAMP* infrastructure and shared memory (SRAM4), small messages are serialized with *Binn* library (probably overkill).    
 * MIDI Control Changes definitions are in a table of functions "ControlChangeFunctionsTable[128]" in MIDI_application.c file.
 * soundgen.cpp is the main synth file.
 * AUDIO_BUFFER_SIZE is defined in audio_play.h file.
