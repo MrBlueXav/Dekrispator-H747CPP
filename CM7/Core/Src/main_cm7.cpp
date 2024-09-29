@@ -1,6 +1,7 @@
 /**
  ******************************************************************************
- * @file			: main_cm7.c
+ * 			DEKRISPATOR H747CPP
+ * @file			: main_cm7.cpp
  * @brief			: Main program body for CM7 of Dekrispator synth
  * @author			: Xavier Halgand
  * @date			: December 2023
@@ -100,7 +101,7 @@ int main(void)
 	while (1)
 	{
 		Process_messages(); 	// in openamp_interface.c
-		AUDIO_Process();	// in audio_play.c
+		Process_audio();	// in audio_play.c
 	}
 }
 /*-----------------------------------------------------------------------------------------------------------------*/

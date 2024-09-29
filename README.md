@@ -7,7 +7,7 @@
 
 
 
-This is the C++ version of **Dekrispator** synth ported on a powerful dual core mcu development board : *Discovery Kit STM32H747I-DISCO* from STMicroelectronics.  
+This is the C++ compatible version of **Dekrispator** synth ported on a powerful dual core mcu development board : *Discovery Kit STM32H747I-DISCO* from STMicroelectronics.  
 Actually, it's a mix of C and C++ files but allowing now use of C++ DaisySP lib for example.
 There are two additional instruments :  
 

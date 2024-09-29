@@ -38,15 +38,7 @@ typedef enum
 
 } BUFFER_StateTypeDef;
 
-//typedef struct
-//{
-//	uint8_t buff[AUDIO_BUFFER_SIZE]; // AUDIO_BUFFER_SIZE is defined in constants.h
-//	BUFFER_StateTypeDef state;
-//
-//} AUDIO_BufferTypeDef;
-
 /* Private variables ---------------------------------------------------------*/
-//ALIGN_32BYTES(static volatile AUDIO_BufferTypeDef buffer_ctl);
 ALIGN_32BYTES(static uint8_t buff[AUDIO_BUFFER_SIZE]);// AUDIO_BUFFER_SIZE is defined in constants.h
 static volatile _DTCMRAM_ BUFFER_StateTypeDef state;
 static _DTCMRAM_ AUDIO_PLAYBACK_StateTypeDef audio_state;
@@ -89,7 +81,7 @@ void AudioInit(void)
 }
 
 /*----------------------------------------------------------------------------------------------------*/
-uint8_t _ITCMRAM_ AUDIO_Process(void)
+uint8_t _ITCMRAM_ Process_audio(void)
 {
 	AUDIO_ErrorTypeDef error_state = AUDIO_ERROR_NONE;
 
@@ -152,7 +144,7 @@ void BSP_AUDIO_OUT_TransferComplete_CallBack(uint32_t Instance)
 {
 	if (audio_state == AUDIO_STATE_PLAYING)
 	{
-		/* allows AUDIO_Process() to refill 2nd part of the buffer  */
+		/* allows Process_audio() to refill 2nd part of the buffer  */
 		state = BUFFER_OFFSET_FULL;
 	}
 }
@@ -166,7 +158,7 @@ void BSP_AUDIO_OUT_HalfTransfer_CallBack(uint32_t Instance)
 {
 	if (audio_state == AUDIO_STATE_PLAYING)
 	{
-		/* allows AUDIO_Process() to refill 1st part of the buffer  */
+		/* allows Process_audio() to refill 1st part of the buffer  */
 		state = BUFFER_OFFSET_HALF;
 	}
 }

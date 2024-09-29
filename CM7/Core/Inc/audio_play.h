@@ -17,7 +17,7 @@
 
 /* Exported functions ------------------------------------------------------- */
 void 	AudioInit (void);
-uint8_t AUDIO_Process(void);
+uint8_t Process_audio(void);
 void 	Error_Handler(void);
 void 	toggleSound(void);
 void 	incVol(void);

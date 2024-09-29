@@ -1,8 +1,9 @@
 /**
  ******************************************************************************
- * 					DEKRISPATOR H747
- * @file           : main_cm4.c
- * @brief          : Main program body for CM4
+ * 			DEKRISPATOR H747CPP
+ * @file			: main_cm4.c
+ * @brief			: Main program body for CM4
+ * @author			: Xavier Halgand
  * @date			: april 2024
  ******************************************************************************
  */
@@ -21,6 +22,7 @@
 #include "interface.h"
 #include "qspi.h"
 
+/*----------------------------------------------------------------------------*/
 #ifndef HSEM_ID_0
 #define HSEM_ID_0 (0U) /* HW semaphore 0*/
 #endif
@@ -60,16 +62,17 @@ int main(void)
 	MX_RTC_Init();
 	MX_USART1_UART_Init();
 
+	/* send messages to virtual com port */
 	printf("\n");
 	printf("-----------------------------------------\n");
 	printf("Starting Dekrispator H747...\n");
 	printf("-----------------------------------------\n");
 
-	/* Configure the Wakeup push-button and joystick in EXTI Mode */
+	/* Configure the Wake-up push-button and joystick in EXTI Mode */
 	BSP_PB_Init(BUTTON_WAKEUP, BUTTON_MODE_EXTI);
 	BSP_JOY_Init(JOY1, JOY_MODE_EXTI, JOY_ALL);
 
-#if (USE_THE_LCD > 0)
+#if (USE_THE_LCD > 0)	/* defined in constants.h */
 	/* Initialize the LCD */
 	BSP_LCD_Init(0, LCD_ORIENTATION_LANDSCAPE);
 	UTIL_LCD_SetFuncDriver(&LCD_Driver);
@@ -117,8 +120,6 @@ void BSP_LED_Initialize(void)
 /*--------------------------------------------------------------------------------------*/
 void Welcome_message(void)
 {
-#if (USE_THE_LCD > 0)
-
 	if (BSP_QSPI_EnableMemoryMappedMode(0) != BSP_ERROR_NONE)
 	{
 		printf("QSPI Memory Mapped Mode : FAILED\n");
@@ -126,13 +127,14 @@ void Welcome_message(void)
 	else
 	{
 		printf("QSPI Memory Mapped Mode : OK\n");
+#if (USE_THE_LCD > 0)
 		BSP_LCD_DrawBitmap(0, 0, 0, (uint8_t*) BACKGRND_ADDR); /* Display main screen on LCD */
+#endif
 	}
-
+#if (USE_THE_LCD > 0)
 	UTIL_LCD_SetFont(&Font20);
 	UTIL_LCD_SetTextColor(UTIL_LCD_COLOR_BLACK);
 	UTIL_LCD_SetBackColor(UTIL_LCD_COLOR_WHITE);
-
 #endif
 }
 

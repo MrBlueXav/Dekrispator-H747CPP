@@ -19,7 +19,7 @@ void QSPI_init(void)
 	BSP_QSPI_Info_t pQSPI_Info;
 	uint8_t status;
 
-	/*##-1- Configure the QSPI device ########################################*/
+	/*##  -1-  Configure the QSPI device ########################################*/
 	/* QSPI device configuration */
 	BSP_QSPI_Init_t init;
 	init.InterfaceMode = MT25TL01G_QPI_MODE;
@@ -38,7 +38,7 @@ void QSPI_init(void)
 		//UTIL_LCD_DisplayStringAt(20, 100, (uint8_t*) "QSPI Initialization : OK.", LEFT_MODE);
 		printf("QSPI Initialization : OK\n");
 
-		/*##-2- Read & check the QSPI info #######################################*/
+		/*##  -2-  Read & check the QSPI info #######################################*/
 		/* Initialize the structure */
 		pQSPI_Info.FlashSize = (uint32_t) 0x00;
 		pQSPI_Info.EraseSectorSize = (uint32_t) 0x00;
