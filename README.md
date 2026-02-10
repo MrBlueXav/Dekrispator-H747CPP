@@ -25,7 +25,9 @@ https://polymerickblue.bandcamp.com/track/desynkator-i
 https://polymerickblue.bandcamp.com/track/desynkator-ii  
 https://polymerickblue.bandcamp.com/track/desynkator-iii  
 
-DaisySP library from Electrosmith is now included.
+DaisySP library from Electrosmith is now included.  
+
+**To test the synth**, flash the board with the two ELF binaries in CM4/Release/ and CM7/Release folders.
 
 ----
 
@@ -61,12 +63,11 @@ DaisySP library from Electrosmith is now included.
      
 
 I encountered endless issues to make this project work and suffered a lot... ;-)) I hope some people will find it useful and could use it as an audio synth platform !  
-It was first a STM32CubeMX project (the only way I found to reach that point) but can't be regenerated now, be careful ! I left the .ioc file for info only.  
 Beware ! This is not professional code, it's a hobby for me.
 
 
 You should be able to import the project in STM32CubeIDE, I think all necessary files are in the repository.  
-There are also makefiles in /Release/ folder.   
+There are also binaries and makefiles in CM4/Release/ and CM7/Release folders.   
 The background image for LCD (QSPI_Flash/Dekrispator-screen.bin file) should be written in QSPI Flash device with STM32CubeProgrammer application at address *0x97E8 0000* which is 1.5MB before end of memory.
 Be sure to power your board with good PSU (> 1.5 A ?) especially with use of a midi controller, I had USB unstabilities because of unsufficient power in my PC plugs!
 
