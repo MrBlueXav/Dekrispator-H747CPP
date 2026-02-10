@@ -27,7 +27,7 @@ https://polymerickblue.bandcamp.com/track/desynkator-iii
 
 DaisySP library from Electrosmith is now included.  
 
-**To test the synth**, flash the board with the two ELF binaries in CM4/Release/ and CM7/Release folders.
+**To test the synth**, flash the board with the two ELF binaries in CM4/Release/ and CM7/Release folders. Don't forget to flash also the LCD image (see further).
 
 ----
 
